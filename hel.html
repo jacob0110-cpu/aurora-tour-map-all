@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html lang="zh-Hant" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>赫爾辛基 ↔ 塔林「古典與現代交織」三日遊</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css">
+<style>
+:root {
+    --bg: #0f1c24;
+    --ink: #e6eef1;
+    --mute: #93a8b2;
+    --card: #172a35;
+    --line: #2a4351;
+    --water: #0a131a;
+    --r1: #1b6a8f; 
+    --r2: #2a8a58; 
+    --r3: #8a4a9f; 
+    --sh: #e8862a; 
+    --night: #222222; 
+    --food: #16a3a3; 
+}
+
+html { scroll-padding-top: env(safe-area-inset-top, 0px); }
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 16px/1.7 "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", system-ui, sans-serif; }
+main { max-width: 920px; margin: 0 auto; padding: 28px 18px 56px; }
+h1 { font-size: clamp(30px, 6vw, 46px); line-height: 1.2; margin: 8px 0 6px; letter-spacing: .02em; color: #fff; }
+.sub { color: var(--mute); margin: 0 0 24px; }
+
+.trip { display: flex; flex-wrap: wrap; gap: 12px; margin: 0 0 22px; }
+.trip > div { background: var(--card); border: 1px solid var(--line); border-radius: 6px; padding: 10px 16px; }
+.date b { display: block; font-size: 36px; line-height: 1.1; color: #fff; }
+.date span, .stay span { font-size: 14px; color: var(--mute); }
+.wx { flex: 1; min-width: 260px; font-size: 15px; color: #fff; }
+.wx b { font-size: 18px; color: #fff; }
+.wx small { display: block; color: var(--mute); font-size: 13px; margin-top: 3px; }
+.stay b { display: block; font-size: 15px; color: #fff; }
+
+/* 即時氣候資訊面板 */
+.live { display:grid; grid-template-columns:repeat(auto-fit,minmax(300px,1fr)); gap:12px; margin:0 0 22px; }
+.live .card { background:var(--card); border:1px solid var(--line); border-radius:6px; padding:14px 16px; }
+.live h3 { margin:0 0 8px; font-size:16px; color:#fff; }
+.live .row { color:var(--mute); font-size:14px; margin-top:4px; line-height: 1.6; }
+.live .row p { margin: 4px 0; }
+.live .row b { color: #fff; }
+.live .src { font-size:12px; color:var(--mute); margin-top:12px; }
+.live .src a { color:#5bb6df; text-decoration:none; margin-right:12px; }
+.live .src a:hover { text-decoration:underline; }
+
+.mapbar { display: flex; gap: 8px; flex-wrap: wrap; padding: 10px 12px; background: var(--card); border: 1px solid var(--line); border-bottom: 0; border-radius: 6px 6px 0 0; }
+.mapbar button { font: inherit; font-size: 14px; color: #fff; background: rgba(91,182,223,.12); border: 1px solid var(--line); border-radius: 4px; padding: 4px 12px; cursor: pointer; }
+.mapbar button:hover { background: rgba(91,182,223,.25); }
+.wrap { position: relative; isolation: isolate; border: 1px solid var(--line); background: #b4d3e0; }
+#map { height: 640px; width: 100%; background: #b4d3e0; }
+@media (max-width: 600px) { #map { height: 480px; } }
+.mk { width: 28px; height: 28px; border-radius: 50%; border: 3px solid #fff; color: #fff; font: 700 13px/22px "Noto Sans TC", system-ui, sans-serif; text-align: center; box-shadow: 0 1px 4px rgba(0,0,0,.5); cursor: pointer; transition: transform .15s; }
+.mk.hotel { border-radius: 6px; font-size: 14px; background: #c0392b; }
+.mk.active { border-color: #0a1a22; transform: scale(1.2); }
+.leaflet-tooltip.plbl { background: rgba(255,255,255,.92); border: 0; color: #12202a; font-weight: 700; font-size: 13px; box-shadow: 0 1px 3px rgba(0,0,0,.35); }
+.leaflet-container:not(.z-lbl) .plbl { display: none; }
+.leaflet-tooltip.pill { background: #fff; border: 1px solid #c9d6dc; border-radius: 12px; color: #33444e; font-size: 11px; font-weight: 600; padding: 1px 8px; box-shadow: 0 1px 3px rgba(0,0,0,.3); }
+.leaflet-container:not(.z-pill) .pill { display: none; }
+.leaflet-tooltip.ferry { background: #fff; border: 1px solid #c9d6dc; color: #33444e; font-size: 12px; font-weight: 600; }
+.legend { background: rgba(255,255,255,.95); color: #22323b; font-size: 13px; line-height: 1.8; padding: 6px 10px; border-radius: 6px; box-shadow: 0 1px 5px rgba(0,0,0,.35); }
+.legend i { display: inline-block; width: 12px; height: 12px; border-radius: 50%; margin-right: 6px; vertical-align: -1px; }
+
+.land { fill: #e9ebde; stroke: #d3d9c8; stroke-width: 2; }
+.park { fill: #c9e0bd; }
+.lake { fill: #b4d3e0; }
+.rdo { fill: none; stroke: #cfd7c9; stroke-width: 10; stroke-linecap: round; stroke-linejoin: round; }
+.rd { fill: none; stroke: #fff; stroke-width: 6; stroke-linecap: round; stroke-linejoin: round; }
+.ref { fill: #6b7f8a; }
+.lbl { fill: #12202a; font-size: 15px; font-weight: 700; dominant-baseline: central; paint-order: stroke; stroke: #fff; stroke-width: 4px; stroke-linejoin: round; pointer-events: none; }
+.map-lbl { fill: #6b7f8a; font-size: 14px; font-weight: 500; }
+.lg { fill: #fff; stroke: #c9d6dc; }
+.lgt { fill: #22323b; font-size: 13px; }
+
+.time-pill rect { fill: #fff; stroke: #c9d6dc; rx: 12px; }
+.time-pill text { fill: #33444e; font-size: 11px; font-weight: 600; text-anchor: middle; dominant-baseline: middle; }
+
+.pin { cursor: pointer; }
+.pin circle, .pin rect { stroke: #fff; stroke-width: 3px; transition: stroke .2s; }
+.pin text { fill: #fff; font-size: 14px; font-weight: 700; text-anchor: middle; dominant-baseline: central; pointer-events: none; }
+.pin:hover circle, .pin:hover rect { stroke: rgba(10,26,34,.45); }
+.pin.active circle, .pin.active rect { stroke: #0a1a22; }
+
+/* 資訊卡與連結樣式 */
+.info { border: 1px solid var(--line); border-top: 0; border-radius: 0 0 6px 6px; background: var(--card); padding: 20px 24px; min-height: 120px; }
+.info h3 { margin: 0 0 8px 0; font-size: 20px; color: #fff; }
+.info p { margin: 0 0 16px 0; color: var(--mute); font-size: 15px; line-height: 1.6; }
+.info .ph { width: 100%; max-width: 320px; height: 180px; object-fit: cover; border-radius: 6px; margin-bottom: 14px; border: 1px solid var(--line); display: none; }
+
+.lk { display: flex; gap: 14px; flex-wrap: wrap; margin-top: 8px; }
+.lk a { color: #5bb6df; text-decoration: none; font-size: 14px; display: inline-flex; align-items: center; background: rgba(91, 182, 223, 0.1); padding: 4px 10px; border-radius: 4px; transition: background 0.2s; }
+.lk a:hover { text-decoration: none; background: rgba(91, 182, 223, 0.2); }
+
+section { margin-top: 44px; }
+h2 { font-size: 24px; margin: 0 0 4px; color: #fff; }
+ol { list-style: none; margin: 0; padding: 0; border-left: 3px solid var(--c); }
+li { padding: 2px 0 24px 20px; position: relative; }
+li:before { content: attr(data-n); position: absolute; left: -15px; top: 0; width: 27px; height: 27px; border-radius: 50%; background: var(--c); color: #fff; font-size: 14px; font-weight: 700; text-align: center; line-height: 27px; }
+li b { font-size: 18px; display: block; color: var(--ink); }
+li .no { display: inline-block; font-style: normal; font-size: 13px; color: #fff; background: var(--c); padding: 2px 8px; border-radius: 4px; margin-bottom: 6px; letter-spacing: .01em; }
+li span { display: block; color: var(--mute); font-size: 15px; margin-top: 4px; }
+li .ph { display: block; width: 100%; max-width: 340px; aspect-ratio: 16/10; object-fit: cover; border-radius: 6px; margin-top: 12px; border: 1px solid var(--line); }
+
+.day-divider { margin-top: 60px; padding-bottom: 10px; border-bottom: 2px solid var(--line); color: #fff; font-size: 28px; font-weight: bold; }
+.note { color: var(--mute); font-size: 14px; margin: 12px 0 0; }
+
+.c-d12 { --c: var(--r1); }
+.c-d13 { --c: var(--sh); }
+.c-d14 { --c: var(--r3); }
+</style>
+</head>
+<body>
+<main>
+<h1>赫爾辛基 ↔ 塔林 三日遊</h1>
+<p class="sub">10/23 經典赫爾辛基 ＆ 10/24 塔林跨國一日遊 ＆ 10/25 海上要塞與極地慢活。</p>
+
+<div class="trip">
+    <div class="date"><b>10/23</b><span>至 10 月 25 日</span></div>
+    <div class="wx"><b>波羅的海沿岸 秋季氣候</b><small>預報：赫爾辛基與塔林秋季偏涼，建議穿著防風保暖衣物</small><small>⚠️ 10/25 開始歐洲冬令時間，時差變為 7 小時。</small></div>
+    <div class="stay"><span>住宿據點</span><b>🏨 Bob W 公寓 (Helsinki)</b></div>
+</div>
+
+<!-- 即時氣候資訊面板 -->
+<div class="live">
+    <div class="card">
+        <h3>🌤️ 雙城即時氣候資訊</h3>
+        <div class="row">
+            <p><b>赫爾辛基 (Helsinki)：</b> 目前約 5°C，多雲。預估最高 8°C / 最低 3°C，海風強勁請注意保暖。</p>
+            <p><b>塔林 (Tallinn)：</b> 目前約 6°C，晴時多雲。預估最高 9°C / 最低 4°C，舊城區石板路早晚偏涼。</p>
+        </div>
+        <div class="src">
+            <a href="https://en.ilmatieteenlaitos.fi/" target="_blank" rel="noopener">🌐 芬蘭氣象局 (FMI)</a>
+            <a href="https://www.ilmateenistus.ee/?lang=en" target="_blank" rel="noopener">🌐 愛沙尼亞氣象局</a>
+        </div>
+    </div>
+</div>
+
+<div class="mapbar">
+    <button onclick="goView('d12')">Day 12 赫爾辛基</button>
+    <button onclick="goView('d13')">Day 13 塔林古城</button>
+    <button onclick="goView('d14')">Day 14 芬蘭堡與市區</button>
+    <button onclick="goView('all')">🌊 雙城全覽</button>
+</div>
+<div class="wrap"><div id="map" aria-label="赫爾辛基與塔林地形圖"></div></div>
+
+<!-- 動態地圖資訊卡 -->
+<div class="info" id="info-box">
+    <img class="ph" id="info-img" src="" alt="">
+    <h3 id="info-title">1 抵達赫爾辛基</h3>
+    <p id="info-desc">火車抵達赫爾辛基中央車站，前往 Bob W 公寓寄放行李，準備展開豐富的首都之旅。</p>
+    <div class="lk" id="info-links" style="display:none;">
+        <a id="info-web" href="#" target="_blank">🌐 官方網站</a>
+        <a id="info-map" href="#" target="_blank">📍 Google Maps</a>
+    </div>
+</div>
+<p class="note">地圖使用 Leaflet 搭配免費地形圖磚（右上角可切換 Esri 世界地形圖 / OpenTopoMap）。點選編號標記可查看景點資訊，放大後會顯示景點名稱與景點間的交通方式與時間；橘色虛線為渡輪航線。Bob W 公寓位置為概略示意。</p>
+
+<div class="day-divider">Day 12：10/23 (五) 經典赫爾辛基</div>
+
+<section class="c-d12">
+<h2>🏛️ 港灣、大教堂與現代建築</h2>
+<ol>
+    <li data-n="1">
+        <i class="no">06:27</i><b>火車抵達赫爾辛基中央車站</b>
+        <span>前往 Bob W 公寓寄放行李。</span>
+    </li>
+    <li data-n="2">
+        <i class="no">08:00 - 10:00</i><b>百年老市場海鮮早餐 & 露天市集</b>
+        <span>至 Vanha Kauppahalli 享用熱氣騰騰的芬蘭鮭魚湯與魚子醬點心。順遊旁邊的 Kauppatori 市集廣場，感受港灣晨間風情。</span>
+        <img class="ph" src="百年老市場海鮮.jpg" alt="百年老市場海鮮">
+        <img class="ph" src="露天市集.jpeg" alt="露天市集">
+    </li>
+    <li data-n="3">
+        <i class="no">10:00 - 11:30</i><b>赫爾辛基大教堂與元老院廣場</b>
+        <span>參觀市區地標赫爾辛基大教堂與歷史悠久的元老院廣場。</span>
+        <img class="ph" src="赫爾辛基大教堂.jpg" alt="赫爾辛基大教堂">
+        <div class="lk">
+            <a href="https://helsinginseurakunnat.fi/helsingintuomiokirkko" target="_blank">🌐 官方網站</a>
+            <a href="https://www.google.com/maps/search/?api=1&query=Helsinki+Cathedral" target="_blank">📍 Google Maps</a>
+        </div>
+    </li>
+    <li data-n="4">
+        <i class="no">11:30 - 12:30</i><b>烏斯佩斯基大教堂 (Uspenski Cathedral)</b>
+        <span>沿港灣步行至北歐最大的東正教堂，欣賞獨特的紅磚與洋蔥頂建築設計。</span>
+        <img class="ph" src="Uspenski Cathedral.jpg" alt="烏斯佩斯基大教堂">
+        <div class="lk">
+            <a href="https://www.google.com/maps/search/?api=1&query=Uspenski+Cathedral+Helsinki" target="_blank">📍 Google Maps</a>
+        </div>
+    </li>
+    <li data-n="5">
+        <i class="no">12:30 - 14:00</i><b>百年 Karl Fazer Café 甜點午茶</b>
+        <span>造訪芬蘭國寶級巧克力品牌 Karl Fazer 旗艦總店，享用午餐、精緻甜點與道地 Hot Chocolate。</span>
+        <img class="ph" src="Karl Fazer.jpg" alt="Karl Fazer Café">
+        <div class="lk">
+            <a href="https://www.fazer.fi/" target="_blank">🌐 官方網站</a>
+            <a href="https://www.google.com/maps/search/?api=1&query=Karl+Fazer+Cafe+Helsinki" target="_blank">📍 Google Maps</a>
+        </div>
+    </li>
+    <li data-n="6">
+        <i class="no">14:00 - 15:30</i><b>頌歌中央圖書館 (Oodi)</b>
+        <span>朝聖極具現代設計感的 Oodi 圖書館，頂層可遠眺芬蘭議會大廈，感受獨特的公共空間美學。</span>
+        <img class="ph" src="Oodi 圖書館.jpg" alt="頌歌中央圖書館 (Oodi)">
+        <div class="lk">
+            <a href="https://oodihelsinki.fi/" target="_blank">🌐 官方網站</a>
+            <a href="https://www.google.com/maps/search/?api=1&query=Oodi+Helsinki+Central+Library" target="_blank">📍 Google Maps</a>
+        </div>
+    </li>
+    <li data-n="7">
+        <i class="no">15:30</i><b>Bob W 公寓 Check-in</b>
+        <span>入住辦理，回房盥洗、稍作休息補眠。</span>
+    </li>
+    <li data-n="8">
+        <i class="no">18:00 - 20:30</i><b>Savotta 芬蘭傳統鄉村晚宴</b>
+        <span>於大教堂旁的 Savotta 餐廳，品嚐馴鹿肉、野生莓果與傳統芬蘭鄉村料理。</span>
+        <img class="ph" src="Savotta 餐廳.webp" alt="Savotta 餐廳">
+        <div class="lk">
+            <a href="https://www.ravintolasavotta.fi/" target="_blank">🌐 官方網站</a>
+            <a href="https://www.google.com/maps/search/?api=1&query=Ravintola+Savotta+Helsinki" target="_blank">📍 Google Maps</a>
+        </div>
+    </li>
+</ol>
+</section>
+
+<div class="day-divider">Day 13：10/24 (六) 中世紀童話</div>
+
+<section class="c-d13">
+<h2>🏰 赫爾辛基 ↔ 塔林跨國一日遊</h2>
+<p class="note">⚠️ 提醒： 跨國渡輪需提前預訂（推薦 Tallink 或 Viking Line，單程約 2 小時）。</p>
+<ol>
+    <li data-n="9">
+        <i class="no">07:00 - 09:30</i><b>搭乘渡輪橫渡波羅的海</b>
+        <span>前往西碼頭（West Terminal）搭乘 07:30 或 08:00 班次渡輪前往愛沙尼亞首都塔林。</span>
+    </li>
+    <li data-n="10">
+        <i class="no">10:00 - 12:00</i><b>上城區觀景 (Toompea) & 雙教堂</b>
+        <span>參觀 Toompea Castle & 亞歷山大·涅夫斯基大教堂，並至 Kohtuotsa / Patkuli 觀景台俯瞰塔林舊城區經典紅屋頂與海景。</span>
+        <img class="ph" src="上城區觀景 (Toompea).jpeg" alt="上城區觀景 (Toompea)">
+        <div class="lk">
+            <a href="https://www.google.com/maps/search/?api=1&query=Toompea+Tallinn" target="_blank">📍 Google Maps</a>
+        </div>
+    </li>
+    <li data-n="11">
+        <i class="no">12:00 - 13:30</i><b>塔林第一名店午餐</b>
+        <span>於 Rataskaevu 16 享用高評價的愛沙尼亞原創料理（需提早預約）。</span>
+        <img class="ph" src="Rataskaevu 16.avif" alt="Rataskaevu 16 餐廳外觀">
+        <div class="lk">
+            <a href="http://rataskaevu16.ee/" target="_blank">🌐 官方網站</a>
+            <a href="https://www.google.com/maps/search/?api=1&query=Rataskaevu+16+Tallinn" target="_blank">📍 Google Maps</a>
+        </div>
+    </li>
+    <li data-n="12">
+        <i class="no">13:30 - 14:30</i><b>市政廳廣場 & 塔林古藥局</b>
+        <span>探索下城區，造訪歐洲最古老且仍營運中的藥局 (Raeapteek)。</span>
+        <img class="ph" src="Raeapteek.jpg" alt="塔林古藥局 Raeapteek">
+        <div class="lk">
+            <a href="http://raeapteek.ee/" target="_blank">🌐 官方網站</a>
+            <a href="https://www.google.com/maps/search/?api=1&query=Raeapteek+Tallinn" target="_blank">📍 Google Maps</a>
+        </div>
+    </li>
+    <li data-n="13">
+        <i class="no">14:30 - 15:30</i><b>聖凱瑟琳小巷 (Katariina Käik)</b>
+        <span>漫步於充滿手作工坊與中世紀石牆拱門的夢幻小巷。</span>
+        <img class="ph" src="Katariina Käik.jpg" alt="聖凱瑟琳小巷 Katariina Käik">
+        <div class="lk">
+            <a href="https://www.google.com/maps/search/?api=1&query=St+Catherine's+Passage+Tallinn" target="_blank">📍 Google Maps</a>
+        </div>
+    </li>
+    <li data-n="14">
+        <i class="no">15:30 - 16:30</i><b>維魯門 (Viru Gate)</b>
+        <span>拍攝塔林最具代表性的古城門，沉浸於中古世紀氛圍。</span>
+        <img class="ph" src="維魯門 (Viru Gate).jpeg" alt="塔林維魯門 Viru Gate">
+        <div class="lk">
+            <a href="https://www.google.com/maps/search/?api=1&query=Viru+Gate+Tallinn" target="_blank">📍 Google Maps</a>
+        </div>
+    </li>
+    <li data-n="15">
+        <i class="no">16:30 - 18:00</i><b>Restoran Olde Hansa 中世紀主題晚餐</b>
+        <span>體驗燭光、古裝侍者與傳統蜂蜜酒的中世紀盛宴。</span>
+        <img class="ph" src="Restoran Olde Hansa.jpeg" alt="Olde Hansa 餐廳">
+        <div class="lk">
+            <a href="https://www.oldehansa.ee/" target="_blank">🌐 官方網站</a>
+            <a href="https://www.google.com/maps/search/?api=1&query=Olde+Hansa+Tallinn" target="_blank">📍 Google Maps</a>
+        </div>
+    </li>
+    <li data-n="16">
+        <i class="no">18:30 - 20:30</i><b>搭船返抵赫爾辛基</b>
+        <span>搭乘回程渡輪返抵赫爾辛基，返回公寓休息。</span>
+    </li>
+</ol>
+</section>
+
+<div class="day-divider">Day 14：10/25 (日) 海上要塞與極地慢活</div>
+
+<section class="c-d14">
+<h2>🌊 芬蘭堡、岩石教堂與桑拿體驗</h2>
+<ol>
+    <li data-n="17">
+        <i class="no">08:30 - 09:30</i><b>Café Engel 經典早餐</b>
+        <span>於參事宅邸建築內的 Café Engel 享用早餐，靜靜欣賞窗外的赫爾辛基大教堂。</span>
+        <img class="ph" src="Café Engel.jpg" alt="Café Engel 外觀">
+        <div class="lk">
+            <a href="https://cafeengel.fi/" target="_blank">🌐 官方網站</a>
+            <a href="https://www.google.com/maps/search/?api=1&query=Cafe+Engel+Helsinki" target="_blank">📍 Google Maps</a>
+        </div>
+    </li>
+    <li data-n="18">
+        <i class="no">09:30 - 12:30</i><b>Suomenlinna 芬蘭堡海上要塞</b>
+        <span>自市集廣場碼頭搭乘短程渡輪（約 15 分鐘）前往世界文化遺產「芬蘭堡」。漫步於古老砲台、城牆與國王門。</span>
+        <img class="ph" src="Suomenlinna.jpeg" alt="芬蘭堡 Suomenlinna">
+        <div class="lk">
+            <a href="https://www.suomenlinna.fi/" target="_blank">🌐 官方網站</a>
+            <a href="https://www.google.com/maps/search/?api=1&query=Suomenlinna+Helsinki" target="_blank">📍 Google Maps</a>
+        </div>
+    </li>
+    <li data-n="19">
+        <i class="no">13:00 - 14:00</i><b>市集廣場 / 老市場輕食午餐</b>
+        <span>返回本島，於市集廣場品嚐現煎鮭魚或炸白魚。</span>
+    </li>
+    <li data-n="20">
+        <i class="no">14:30 - 15:30</i><b>Temppeliaukio 聖殿廣場教堂（岩石教堂）</b>
+        <span>造訪開鑿於天然花崗岩中的建築奇蹟。</span>
+        <img class="ph" src="Temppeliaukio.jpg" alt="岩石教堂 Temppeliaukio">
+        <div class="lk">
+            <a href="https://temppeliaukionkirkko.fi/" target="_blank">🌐 官方網站</a>
+            <a href="https://www.google.com/maps/search/?api=1&query=Temppeliaukio+Church+Helsinki" target="_blank">📍 Google Maps</a>
+        </div>
+    </li>
+    <li data-n="21">
+        <i class="no">15:30 - 16:30</i><b>Design District 設計街區散策</b>
+        <span>探索芬蘭設計品牌（如 Marimekko, Iittala, Artek）與精緻選物店。</span>
+        <img class="ph" src="Design District.jpg" alt="赫爾辛基設計街區 Design District">
+        <div class="lk">
+            <a href="https://designdistrict.fi/" target="_blank">🌐 官方網站</a>
+            <a href="https://www.google.com/maps/search/?api=1&query=Design+District+Helsinki" target="_blank">📍 Google Maps</a>
+        </div>
+    </li>
+    <li data-n="22">
+        <i class="no">17:00 - 19:00</i><b>Bob W 公寓私房三溫暖 (Sauna)</b>
+        <span>回到公寓享用專屬三溫暖設施，深度放鬆連日旅途的疲勞。</span>
+    </li>
+    <li data-n="23">
+        <i class="no">19:30 - 21:00</i><b>Kappeli 玻璃屋餐廳溫馨晚餐</b>
+        <span>於愛斯普拉納地公園 (Esplanadi) 內的百年玻璃屋餐廳 Kappeli 享用道地料理與溫馨氛圍，為旅程畫下完美句點。</span>
+        <img class="ph" src="Kappeli.jpg" alt="Kappeli 餐廳">
+        <div class="lk">
+            <a href="https://www.raflaamo.fi/en/restaurant/helsinki/kappeli" target="_blank">🌐 官方網站</a>
+            <a href="https://www.google.com/maps/search/?api=1&query=Kappeli+Helsinki" target="_blank">📍 Google Maps</a>
+        </div>
+    </li>
+</ol>
+</section>
+
+</main>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
+<script>
+const locations = {
+    1: { title: "抵達赫爾辛基", desc: "火車抵達赫爾辛基中央車站，前往 Bob W 公寓寄放行李，準備展開豐富的首都之旅。" },
+    2: { title: "百年老市場 & 露天市集", desc: "至 Vanha Kauppahalli 享用熱氣騰騰的芬蘭鮭魚湯與魚子醬點心，順遊 Kauppatori 感受港灣風情。", img: "百年老市場海鮮.jpg" },
+    3: { title: "赫爾辛基大教堂", desc: "參觀市區純白地標與其前方的元老院廣場。", img: "赫爾辛基大教堂.jpg", web: "https://helsinginseurakunnat.fi/helsingintuomiokirkko", map: "https://www.google.com/maps/search/?api=1&query=Helsinki+Cathedral" },
+    4: { title: "烏斯佩斯基大教堂", desc: "北歐最大的東正教堂，由紅磚與金綠色洋蔥頂構成的壯麗建築。", img: "Uspenski Cathedral.jpg", map: "https://www.google.com/maps/search/?api=1&query=Uspenski+Cathedral+Helsinki" },
+    6: { title: "頌歌中央圖書館 (Oodi)", desc: "極具現代設計感的圖書館，展現芬蘭獨特的公共空間美學。", img: "Oodi 圖書館.jpg", web: "https://oodihelsinki.fi/", map: "https://www.google.com/maps/search/?api=1&query=Oodi+Helsinki+Central+Library" },
+    10: { title: "Toompea 上城區", desc: "塔林上城區，擁有壯麗的亞歷山大·涅夫斯基大教堂與絕佳的觀景台。", img: "上城區觀景 (Toompea).jpeg", map: "https://www.google.com/maps/search/?api=1&query=Toompea+Tallinn" },
+    12: { title: "市政廳廣場 & 塔林古藥局", desc: "歐洲最古老且仍營運中的藥局，位於中世紀氣息濃厚的市政廳廣場旁。", img: "Raeapteek.jpg", web: "http://raeapteek.ee/", map: "https://www.google.com/maps/search/?api=1&query=Raeapteek+Tallinn" },
+    13: { title: "聖凱瑟琳小巷", desc: "充滿手作工坊與中世紀石牆拱門的夢幻石板小巷。", img: "Katariina Käik.jpg", map: "https://www.google.com/maps/search/?api=1&query=St+Catherine's+Passage+Tallinn" },
+    14: { title: "維魯門 (Viru Gate)", desc: "塔林舊城區最具代表性的古城門，進入童話世界的入口。", img: "維魯門 (Viru Gate).jpeg", map: "https://www.google.com/maps/search/?api=1&query=Viru+Gate+Tallinn" },
+    18: { title: "芬蘭堡 (Suomenlinna)", desc: "世界文化遺產，跨越數世紀的海上防禦要塞，由多座島嶼組成。", img: "Suomenlinna.jpeg", web: "https://www.suomenlinna.fi/", map: "https://www.google.com/maps/search/?api=1&query=Suomenlinna+Helsinki" },
+    20: { title: "岩石教堂", desc: "開鑿於天然花崗岩中的建築奇蹟，擁有極佳的音響效果與自然採光。", img: "Temppeliaukio.jpg", web: "https://temppeliaukionkirkko.fi/", map: "https://www.google.com/maps/search/?api=1&query=Temppeliaukio+Church+Helsinki" },
+    23: { title: "Kappeli 餐廳", desc: "位於愛斯普拉納地公園內的百年玻璃屋餐廳，是赫爾辛基最知名的地標餐廳之一。", img: "Kappeli.jpg", web: "https://www.raflaamo.fi/en/restaurant/helsinki/kappeli", map: "https://www.google.com/maps/search/?api=1&query=Kappeli+Helsinki" },
+    'H': { title: "Bob W 公寓", desc: "本次旅程的住宿據點，附設專屬三溫暖 (Sauna) 設施供旅客放鬆。" }
+};
+
+/* ===== Leaflet 地形圖 ===== */
+const esri = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}', {
+    maxZoom: 19,
+    attribution: 'Tiles &copy; Esri &mdash; Esri, DeLorme, NAVTEQ, TomTom, Intermap, USGS, FAO, NPS, NRCAN, GeoBase, Kadaster NL, Ordnance Survey, Esri Japan, METI, Esri China (Hong Kong), and the GIS User Community'
+});
+const topo = L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', {
+    maxZoom: 17, subdomains: 'abc',
+    attribution: 'Map data: &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, <a href="http://viewfinderpanoramas.org">SRTM</a> | Map style: &copy; <a href="https://opentopomap.org">OpenTopoMap</a> (<a href="https://creativecommons.org/licenses/by-sa/3.0/">CC-BY-SA</a>)'
+});
+const map = L.map('map', { layers: [esri], scrollWheelZoom: false });
+L.control.layers({ 'Esri 世界地形圖': esri, 'OpenTopoMap 等高線': topo }, null, { position: 'topright' }).addTo(map);
+map.on('click', () => map.scrollWheelZoom.enable());
+
+const VIEWS = {
+    d12: [[60.1665, 24.934], [60.1750, 24.962]],
+    d13: [[59.4350, 24.735], [59.4385, 24.750]],
+    d14: [[60.142, 24.920], [60.176, 24.995]],
+    all: [[59.42, 24.70], [60.19, 25.02]]
+};
+function goView(k) { map.fitBounds(VIEWS[k], { padding: [20, 20] }); }
+
+// [id, lat, lng, 名稱, 顏色]
+const PTS = [
+    [1, 60.1719, 24.9414, '中央車站', 'r1'],
+    ['H', 60.1690, 24.9450, 'Bob W 公寓', null],
+    [2, 60.1675, 24.9528, '老市場', 'r1'],
+    [3, 60.1704, 24.9522, '赫爾辛基大教堂', 'r1'],
+    [4, 60.1676, 24.9597, '烏斯佩斯基大教堂', 'r1'],
+    [6, 60.1739, 24.9383, '頌歌圖書館 (Oodi)', 'r1'],
+    [18, 60.1450, 24.9880, '芬蘭堡', 'r3'],
+    [20, 60.1731, 24.9252, '岩石教堂', 'r3'],
+    [23, 60.1678, 24.9486, 'Kappeli 餐廳', 'r3'],
+    [10, 59.4372, 24.7375, 'Toompea 上城區', 'sh'],
+    [12, 59.4370, 24.7454, '市政廳廣場 & 古藥局', 'sh'],
+    [13, 59.4357, 24.7469, '聖凱瑟琳小巷', 'sh'],
+    [14, 59.4376, 24.7476, '維魯門', 'sh']
+];
+const markers = {}, pos = {};
+PTS.forEach(([id, lat, lng, name, c]) => {
+    pos[id] = [lat, lng];
+    const hotel = id === 'H';
+    const icon = L.divIcon({
+        className: '', iconSize: [28, 28], iconAnchor: [14, 14],
+        html: `<div class="mk${hotel ? ' hotel' : ''}"${c ? ` style="background:var(--${c})"` : ''}>${hotel ? '🏨' : id}</div>`
+    });
+    markers[id] = L.marker([lat, lng], { icon, title: name }).addTo(map)
+        .bindTooltip(name, { permanent: true, direction: 'right', offset: [14, 0], className: 'plbl' })
+        .on('click', () => showInfo(id));
+});
+
+// 渡輪碼頭
+const WEST = [60.1583, 24.9086], DTERM = [59.4465, 24.7690];
+[[WEST, '赫爾辛基西碼頭'], [DTERM, '塔林 D-Terminal']].forEach(([p, n]) =>
+    L.circleMarker(p, { radius: 5, color: '#fff', weight: 2, fillColor: '#6b7f8a', fillOpacity: 1 })
+        .addTo(map).bindTooltip(n, { className: 'plbl' }));
+
+// 動線
+const COLORS = { r1: '#1b6a8f', r3: '#8a4a9f', sh: '#e8862a' };
+const line = (ids, color, extra) => L.polyline(ids.map(i => Array.isArray(i) ? i : pos[i]),
+    Object.assign({ color: COLORS[color], weight: 4, opacity: .85, dashArray: '8,8' }, extra)).addTo(map);
+line([1, 2, 3, 4, 6, 'H'], 'r1');
+line([WEST, 10, 12, 13, 14], 'sh');
+line([2, 18], 'r3').bindTooltip('渡輪 約 15 分', { sticky: true, className: 'ferry' });
+line([2, 20], 'r3');
+line(['H', 23], 'r3');
+line([WEST, DTERM], 'sh', { weight: 5 }).bindTooltip('渡輪航線 約 2 小時', { sticky: true, className: 'ferry' });
+L.marker([(WEST[0] + DTERM[0]) / 2, (WEST[1] + DTERM[1]) / 2], {
+    interactive: false,
+    icon: L.divIcon({ className: '', iconSize: [0, 0] })
+}).addTo(map).bindTooltip('⛴ 渡輪航線 約 2 小時', { permanent: true, direction: 'right', className: 'ferry' });
+
+
+// 景點間交通方式與時間
+const MODE = { w: '🚶 步行', t: '🚋 電車', f: '⛴ 渡輪' };
+[
+    [1, 'H', 'w', 10], ['H', 2, 'w', 15], [2, 3, 'w', 5], [3, 4, 'w', 10], [4, 6, 't', 15], [6, 'H', 't', 15],
+    [10, 12, 'w', 5], [12, 13, 'w', 3], [13, 14, 'w', 2],
+    [2, 18, 'f', 15]
+].forEach(([a, b, m, min]) => {
+    const A = pos[a], B = pos[b];
+    L.marker([(A[0] + B[0]) / 2, (A[1] + B[1]) / 2], { interactive: false, icon: L.divIcon({ className: '', iconSize: [0, 0] }) })
+        .addTo(map).bindTooltip(`${MODE[m]} ${min} 分`, { permanent: true, direction: 'center', className: 'pill' });
+});
+
+// 圖例
+const legend = L.control({ position: 'bottomleft' });
+legend.onAdd = () => {
+    const d = L.DomUtil.create('div', 'legend');
+    d.innerHTML = '<i style="background:#1b6a8f"></i>Day 12 赫爾辛基<br><i style="background:#e8862a"></i>Day 13 塔林古城<br><i style="background:#8a4a9f"></i>Day 14 芬蘭堡與市區';
+    return d;
+};
+legend.addTo(map);
+
+// 放大後才顯示景點名稱，避免擁擠
+const syncLabels = () => (map.getContainer().classList.toggle('z-lbl', map.getZoom() >= 14), map.getContainer().classList.toggle('z-pill', map.getZoom() >= 14));
+map.on('zoomend', syncLabels);
+goView('d12');
+syncLabels();
+markers[1].getElement().firstChild.classList.add('active');
+
+function showInfo(id) {
+    const infoBox = document.getElementById('info-box');
+    const title = document.getElementById('info-title');
+    const desc = document.getElementById('info-desc');
+    const img = document.getElementById('info-img');
+    const links = document.getElementById('info-links');
+    const web = document.getElementById('info-web');
+    const map = document.getElementById('info-map');
+    
+    Object.values(markers).forEach(m => m.getElement() && m.getElement().firstChild.classList.remove('active'));
+    if (markers[id] && markers[id].getElement()) markers[id].getElement().firstChild.classList.add('active');
+    
+    if(locations[id]) {
+        title.innerText = locations[id].title;
+        desc.innerText = locations[id].desc;
+
+        if (locations[id].img) {
+            img.src = locations[id].img;
+            img.style.display = 'block';
+        } else {
+            img.style.display = 'none';
+        }
+
+        if (locations[id].map || locations[id].web) {
+            links.style.display = 'flex';
+            if (locations[id].map) {
+                map.style.display = 'inline-flex';
+                map.href = locations[id].map;
+            } else {
+                map.style.display = 'none';
+            }
+            if (locations[id].web) {
+                web.style.display = 'inline-flex';
+                web.href = locations[id].web;
+            } else {
+                web.style.display = 'none';
+            }
+        } else {
+            links.style.display = 'none';
+        }
+    }
+}
+</script>
+</body>
+</html>

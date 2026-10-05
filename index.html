@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<!-- viewport-fit=cover：讓手機瀏海/圓角機型也能滿版顯示 -->
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>極光之徑｜行程主控台</title>
+<style>
+  /* ========== 1. 色彩變數：深色為預設，亦提供極簡白底 ========== */
+  :root {
+    --bg: #15191f;          /* 頁面底色（深灰藍） */
+    --bar: #1b2129;         /* 頂部導覽列 */
+    --line: #2b333d;        /* 分隔線 */
+    --text: #e7ebef;        /* 主要文字 */
+    --muted: #8d98a5;       /* 次要文字 */
+    --accent: #6cc7b4;      /* 強調色（極光青綠） */
+    --hover: #232a33;       /* 滑過背景 */
+    --frame-bg: #ffffff;    /* iframe 載入前底色，避免閃黑 */
+    --bar-h: 56px;
+  }
+  :root[data-theme="light"] {
+    --bg: #f5f6f8; --bar: #ffffff; --line: #e1e4e8;
+    --text: #1d2329; --muted: #6a7581; --accent: #0f8a74; --hover: #eef1f4;
+  }
+
+  /* ========== 2. 基本版面：頂欄 + 滿版內容區 ========== */
+  * { box-sizing: border-box; margin: 0; }
+  html, body { height: 100%; }
+  body {
+    display: flex; flex-direction: column;
+    background: var(--bg); color: var(--text);
+    font-family: "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", system-ui, sans-serif;
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+
+  /* ========== 3. 頂部導覽列 ========== */
+  header {
+    display: flex; flex-wrap: wrap; align-items: center; gap: 0 16px;
+    padding: 0 16px;
+    background: var(--bar); border-bottom: 1px solid var(--line);
+  }
+  .brand, nav, .tools { min-height: var(--bar-h); align-items: center; }
+  .brand { display: flex; font-size: 16px; font-weight: 700; letter-spacing: .04em; white-space: nowrap; }
+
+  /* 頁籤：容器可橫向捲動，手機上不會換行或擠壓 */
+  nav { flex: 1; min-width: 0; display: flex; gap: 4px; overflow-x: auto; scrollbar-width: none; }
+  nav::-webkit-scrollbar { display: none; }
+  nav button {
+    flex: none; padding: 8px 14px; border: 0; border-radius: 8px;
+    background: transparent; color: var(--muted);
+    font: inherit; font-size: 14px; cursor: pointer; position: relative;
+    transition: background .15s, color .15s;
+  }
+  nav button:hover { background: var(--hover); color: var(--text); }
+  nav button[aria-selected="true"] { color: var(--text); font-weight: 600; }
+  /* 目前頁籤底線，標示所在位置 */
+  nav button[aria-selected="true"]::after {
+    content: ""; position: absolute; left: 14px; right: 14px; bottom: 2px;
+    height: 2px; border-radius: 2px; background: var(--accent);
+  }
+
+  /* 右側工具按鈕 */
+  .tools { display: flex; gap: 4px; }
+  .tools button, .tools a {
+    display: grid; place-items: center; width: 36px; height: 36px;
+    border: 0; border-radius: 8px; background: transparent; color: var(--muted);
+    font-size: 16px; text-decoration: none; cursor: pointer;
+  }
+  .tools button:hover, .tools a:hover { background: var(--hover); color: var(--text); }
+  button:focus-visible, a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  /* ========== 4. 內容區：每個子網頁各一個 iframe ========== */
+  main { flex: 1; position: relative; min-height: 0; }
+  iframe {
+    position: absolute; inset: 0; width: 100%; height: 100%;
+    border: 0; background: var(--frame-bg);
+    display: none;                 /* 預設隱藏，切換時才顯示 */
+  }
+  iframe.active { display: block; }
+
+  /* 載入中提示 */
+  .loading {
+    position: absolute; inset: 0; display: grid; place-items: center;
+    color: var(--muted); font-size: 14px; pointer-events: none; transition: opacity .2s;
+  }
+  .loading.hide { opacity: 0; }
+
+  /* 標題下方的一列所在地資訊：地名、當地時間、天氣、日出日落 */
+  .info {
+    order: 9; flex-basis: 100%; display: flex; flex-wrap: wrap; gap: 2px 18px;
+    padding: 0 0 8px; margin-top: -6px; color: var(--muted); font-size: 13px;
+    font-variant-numeric: tabular-nums; cursor: pointer;
+  }
+  .info b { color: var(--text); font-weight: 600; }
+
+  /* 載入逾時提示：頁面太久沒回應時才出現 */
+  .slow {
+    position: absolute; left: 50%; bottom: 16px; transform: translateX(-50%);
+    z-index: 2; display: none; gap: 10px; align-items: center;
+    padding: 10px 14px; border-radius: 10px; font-size: 13px;
+    background: var(--bar); color: var(--text); border: 1px solid var(--line);
+    box-shadow: 0 4px 16px rgba(0,0,0,.25); max-width: calc(100% - 24px);
+  }
+  .slow.show { display: flex; }
+  .slow a { color: var(--accent); }
+
+  /* ========== 5. 響應式：手機改為兩列（標題在上、頁籤在下） ========== */
+  @media (max-width: 640px) {
+    header { gap: 0 8px; padding: 0 12px; }
+    .brand { font-size: 15px; flex: 1; }
+    .brand, .tools { min-height: 44px; }
+    .tools { order: 2; }
+    .info { order: 3; margin-top: 0; padding-bottom: 4px; gap: 2px 12px; }
+    nav { order: 4; flex-basis: 100%; min-height: 40px; padding-bottom: 4px; }
+  }
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">極光之徑 行程主控台</div>
+  <nav id="tabs" role="tablist" aria-label="行程頁面"></nav>
+  <div class="tools">
+    <button id="reload" title="重新載入目前頁面" aria-label="重新載入">⟳</button>
+    <a id="popout" title="在新分頁開啟目前頁面" aria-label="新分頁開啟" target="_blank" rel="noopener">↗</a>
+    <button id="theme" title="切換深色 / 淺色" aria-label="切換主題">◐</button>
+  </div>
+  <div class="info" id="info" title="點一下重新定位與更新">定位中…</div>
+</header>
+
+<main id="stage">
+  <div class="loading" id="loading">載入中…</div>
+  <div class="slow" id="slow" role="status">此頁載入較久或沒有顯示？<a id="slowLink" target="_blank" rel="noopener">在新分頁開啟</a></div>
+</main>
+
+<script>
+  /* ========== 6. 頁面清單：要增減頁籤只需改這裡 ==========
+     id    : 網址 # 後的代號（可直接分享 index.html#osl）
+     title : 頁籤上顯示的文字
+     src   : 子網頁檔名（需與 index.html 放在同一資料夾）  */
+  const PAGES = [
+    { id: 'osl',   title: '奧斯陸',     src: 'osl.html' },
+    { id: 'north', title: '北挪威極光', src: '北挪威秋季極光紀行.html' },
+    { id: 'rvn',   title: '羅瓦涅米',   src: 'RVN.html' },
+    { id: 'hel',   title: '赫爾辛基',   src: 'hel.html' }
+  ];
+
+  const tabsEl = document.getElementById('tabs');
+  const stage = document.getElementById('stage');
+  const loading = document.getElementById('loading');
+  const popout = document.getElementById('popout');
+  const slow = document.getElementById('slow');
+  const slowLink = document.getElementById('slowLink');
+  let slowTimer = null;
+  /* 開始載入時計時，8 秒內沒收到 load 事件就顯示備援提示 */
+  function watch(f) {
+    clearTimeout(slowTimer); slow.classList.remove('show');
+    slowLink.href = f.dataset.src;
+    slowTimer = setTimeout(() => slow.classList.add('show'), 8000);
+  }
+  function done() { clearTimeout(slowTimer); slow.classList.remove('show'); }
+  const frames = {};   // id -> iframe
+  const buttons = {};  // id -> 頁籤按鈕
+  let current = null;
+
+  /* localStorage 在部分環境會被封鎖，一律包 try/catch */
+  const store = {
+    get(k) { try { return localStorage.getItem(k); } catch (e) { return null; } },
+    set(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
+  };
+
+  /* ========== 7. 建立頁籤與 iframe（不加 sandbox，子網頁的儲存與腳本照常運作） ========== */
+  PAGES.forEach(p => {
+    const b = document.createElement('button');
+    b.textContent = p.title;
+    b.setAttribute('role', 'tab');
+    b.onclick = () => show(p.id);
+    tabsEl.appendChild(b);
+    buttons[p.id] = b;
+
+    const f = document.createElement('iframe');
+    f.title = p.title;
+    f.dataset.src = encodeURI(p.src);   // 先記下網址，第一次切換到才載入（省流量）
+    f.addEventListener('load', () => { if (frames[current] === f) { loading.classList.add('hide'); done(); } });
+    stage.appendChild(f);
+    frames[p.id] = f;
+  });
+
+  /* ========== 8. 切換頁籤 ========== */
+  function show(id) {
+    if (!frames[id]) id = PAGES[0].id;
+    current = id;
+    PAGES.forEach(p => {
+      frames[p.id].classList.toggle('active', p.id === id);
+      buttons[p.id].setAttribute('aria-selected', p.id === id);
+    });
+    const f = frames[id];
+    if (!f.src) { loading.classList.remove('hide'); watch(f); f.src = f.dataset.src; }
+    else { loading.classList.add('hide'); done(); }
+    popout.href = f.dataset.src;
+    buttons[id].scrollIntoView({ inline: 'center', block: 'nearest' });
+    history.replaceState(null, '', '#' + id);
+    store.set('lastTab', id);
+  }
+
+  /* 重新載入目前頁面 */
+  document.getElementById('reload').onclick = () => {
+    const f = frames[current];
+    loading.classList.remove('hide');
+    watch(f);
+    f.src = f.dataset.src;
+  };
+
+
+  /* ========== 8.5 標題下方資訊列：使用者所在地的地名、當地時間、即時天氣、日出日落 ==========
+     定位順序：1) 瀏覽器定位（會詢問權限，較精準）→ 2) 失敗或拒絕時改用網路 IP 概略定位。
+     地名：BigDataCloud 反向地理編碼；天氣與日出日落：Open-Meteo。皆免金鑰，需連網。
+     點一下這一列可重新定位並更新。 */
+  const WX = { 0:['☀️','晴朗'], 1:['🌤️','大致晴朗'], 2:['⛅','局部多雲'], 3:['☁️','多雲'], 45:['🌫️','有霧'], 48:['🌫️','霧凇'],
+    51:['🌦️','毛毛雨'], 53:['🌦️','毛毛雨'], 55:['🌦️','毛毛雨'], 56:['🌧️','凍雨'], 57:['🌧️','凍雨'],
+    61:['🌧️','小雨'], 63:['🌧️','中雨'], 65:['🌧️','大雨'], 66:['🌧️','凍雨'], 67:['🌧️','凍雨'],
+    71:['🌨️','小雪'], 73:['🌨️','中雪'], 75:['❄️','大雪'], 77:['🌨️','雪粒'],
+    80:['🌦️','陣雨'], 81:['🌧️','陣雨'], 82:['⛈️','強陣雨'], 85:['🌨️','陣雪'], 86:['❄️','強陣雪'],
+    95:['⛈️','雷雨'], 96:['⛈️','雷雨夾冰雹'], 99:['⛈️','強雷雨'] };
+
+  const infoEl = document.getElementById('info');
+  infoEl.innerHTML = '<span id="iPlace">📍 定位中…</span><span id="iTime"></span><span id="iWx"></span><span id="iSun"></span>';
+  const iPlace = document.getElementById('iPlace'), iTime = document.getElementById('iTime'),
+        iWx = document.getElementById('iWx'), iSun = document.getElementById('iSun');
+  let tz;   // 取得定位後改用該地時區；之前用裝置時區
+
+  /* 每秒更新當地時間 */
+  function tick() {
+    const now = new Date();
+    iTime.innerHTML = '🕒 ' + new Intl.DateTimeFormat('zh-TW', { timeZone: tz, month: 'numeric', day: 'numeric', weekday: 'short' }).format(now) +
+      ' <b>' + new Intl.DateTimeFormat('zh-TW', { timeZone: tz, hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' }).format(now) + '</b>';
+  }
+  setInterval(tick, 1000); tick();
+
+  /* 定位：先試瀏覽器定位，失敗再用 IP */
+  function getPosition() {
+    return new Promise((ok, no) => {
+      if (!navigator.geolocation) return no(new Error('no geolocation'));
+      navigator.geolocation.getCurrentPosition(p => ok({ lat: p.coords.latitude, lon: p.coords.longitude }), no,
+        { timeout: 8000, maximumAge: 10 * 60 * 1000 });
+    });
+  }
+  async function getByIp() {
+    const d = await (await fetch('https://ipwho.is/')).json();
+    if (!d.success) throw new Error('ip lookup failed');
+    return { lat: d.latitude, lon: d.longitude, city: d.city, country: d.country, approx: true };
+  }
+  async function getPlace(pos) {
+    try {
+      const d = await (await fetch('https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=' + pos.lat + '&longitude=' + pos.lon + '&localityLanguage=zh')).json();
+      const name = d.city || d.locality || d.principalSubdivision || pos.city;
+      const area = [...new Set([d.principalSubdivision, d.countryName])].filter(x => x && x !== name).join('，');
+      if (name) return name + (area ? '，' + area : '');
+    } catch (e) {}
+    return (pos.city || '目前位置') + (pos.country ? '，' + pos.country : '');
+  }
+
+  let loc = null, lastFetch = 0;
+  async function loadInfo(force) {
+    if (!force && loc && Date.now() - lastFetch < 5 * 60 * 1000) return;
+    lastFetch = Date.now();
+    try {
+      if (!loc || force) {
+        let pos; try { pos = await getPosition(); } catch (e) { pos = await getByIp(); }
+        loc = { ...pos, place: await getPlace(pos) };
+        iPlace.textContent = '📍 ' + loc.place + (loc.approx ? '（IP 概略定位）' : '');
+      }
+      const r = await fetch('https://api.open-meteo.com/v1/forecast?latitude=' + loc.lat + '&longitude=' + loc.lon +
+        '&current=temperature_2m,apparent_temperature,relative_humidity_2m,weather_code,wind_speed_10m' +
+        '&daily=sunrise,sunset&wind_speed_unit=ms&forecast_days=1&timezone=auto');
+      if (!r.ok) throw new Error(r.status);
+      const d = await r.json(), c = d.current, w = WX[c.weather_code] || ['🌡️', '—'];
+      tz = d.timezone; tick();
+      iWx.innerHTML = w[0] + ' <b>' + Math.round(c.temperature_2m) + '°C</b> ' + w[1] + '，體感 ' + Math.round(c.apparent_temperature) +
+        '°C，濕度 ' + c.relative_humidity_2m + '%，風速 ' + Math.round(c.wind_speed_10m) + ' m/s';
+      const sr = (d.daily.sunrise[0] || '').slice(11, 16), ss = (d.daily.sunset[0] || '').slice(11, 16);
+      iSun.innerHTML = sr && ss ? '🌅 日出 <b>' + sr + '</b>　🌇 日落 <b>' + ss + '</b>' : '今日無日出或日落（極晝或極夜）';
+    } catch (e) {
+      lastFetch = 0;
+      if (!loc) iPlace.textContent = '📍 無法定位';
+      iWx.textContent = '暫無天氣資料，請確認網路連線後點此重試';
+    }
+  }
+  infoEl.onclick = () => loadInfo(true);
+  setInterval(() => loadInfo(false), 10 * 60 * 1000);
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) loadInfo(false); });
+  loadInfo(true);
+
+  /* ========== 9. 主題切換（深色 / 淺色，會記住選擇） ========== */
+  const root = document.documentElement;
+  root.dataset.theme = store.get('theme') || 'dark';
+  document.getElementById('theme').onclick = () => {
+    root.dataset.theme = root.dataset.theme === 'dark' ? 'light' : 'dark';
+    store.set('theme', root.dataset.theme);
+  };
+
+  /* ========== 10. 鍵盤：Alt + ←/→ 切換上一頁 / 下一頁籤 ========== */
+  document.addEventListener('keydown', e => {
+    if (!e.altKey || (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight')) return;
+    const i = PAGES.findIndex(p => p.id === current);
+    const n = (i + (e.key === 'ArrowRight' ? 1 : -1) + PAGES.length) % PAGES.length;
+    show(PAGES[n].id);
+  });
+
+  /* ========== 11. 初始化：網址 # 優先，其次上次所在頁籤 ========== */
+  window.addEventListener('hashchange', () => show(location.hash.slice(1)));
+  show(location.hash.slice(1) || store.get('lastTab') || PAGES[0].id);
+</script>
+</body>
+</html>
