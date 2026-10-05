@@ -1,0 +1,686 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>北歐旅遊全交通手冊 (本機存檔版)</title>
+    
+    <style>
+        html, body {
+            margin: 0; padding: 0; width: 100%; height: 100%;
+            background-color: #E2E8F0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            overflow: hidden;
+        }
+        
+        .app-container {
+            width: 100%; max-width: 600px; height: 100dvh;
+            margin: 0 auto; background-color: #F8FAFC;
+            display: flex; flex-direction: column; position: relative;
+            box-shadow: 0 0 20px rgba(0,0,0,0.05);
+        }
+
+        .header-title {
+            background-color: #0F766E; padding: 16px;
+            padding-top: max(16px, env(safe-area-inset-top));
+            display: flex; justify-content: center; align-items: center;
+            color: #FFFFFF; flex-shrink: 0; z-index: 10;
+        }
+        .header-title span { font-size: 1.2em; font-weight: 700; }
+
+        .content-scroll {
+            flex: 1; overflow-y: auto; position: relative;
+            padding-bottom: 20px; -webkit-overflow-scrolling: touch;
+        }
+        .content-scroll::-webkit-scrollbar { width: 4px; }
+        .content-scroll::-webkit-scrollbar-thumb { background-color: #CBD5E1; border-radius: 4px; }
+
+        .page { display: none; padding: 24px; animation: fadeIn 0.3s ease-in-out; }
+        .page.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        
+        .type-badge {
+            display: inline-flex; align-items: center; gap: 6px;
+            background-color: #0D9488; color: white; padding: 8px 16px;
+            border-radius: 20px; font-size: 0.9em; font-weight: 600;
+            margin-bottom: 15px; box-shadow: 0 2px 6px rgba(13, 148, 136, 0.3);
+        }
+        
+        .route-title { font-size: 1.4em; color: #0F172A; margin: 0 0 15px 0; line-height: 1.4; display: flex; align-items: center; gap: 10px; }
+
+        /* 首頁儀表板 Widget */
+        .dashboard-widget {
+            background: linear-gradient(135deg, #0F766E, #0D9488);
+            color: white; border-radius: 16px; padding: 18px; margin-bottom: 20px;
+            box-shadow: 0 4px 15px rgba(13, 148, 136, 0.3);
+        }
+
+        /* 待辦提醒專區 */
+        .todo-section {
+            background: #FEF2F2; border-radius: 16px; padding: 16px; margin-bottom: 20px;
+            border: 1px solid #FEE2E2; border-left: 4px solid #EF4444; box-shadow: 0 2px 10px rgba(0,0,0,0.03);
+        }
+        .todo-title { font-weight: 700; color: #991B1B; margin-bottom: 10px; font-size: 1.05em; display: flex; align-items: center; gap: 6px; }
+        .todo-item { font-size: 0.9em; color: #7F1D1D; line-height: 1.6; margin-bottom: 8px; border-bottom: 1px dashed #FCA5A5; padding-bottom: 8px; }
+        .todo-item:last-child { margin-bottom: 0; border-bottom: none; padding-bottom: 0; }
+
+        /* 航班追蹤與載入按鈕 */
+        .track-btn { display: flex; align-items: center; justify-content: center; gap: 8px; background: #EFF6FF; color: #2563EB; padding: 12px; border-radius: 12px; text-decoration: none; font-weight: 600; font-size: 0.9em; border: 1px solid #BFDBFE; transition: all 0.2s; cursor: pointer; }
+        .track-btn:active { background: #DBEAFE; transform: scale(0.98); }
+        .btn-auto-fill { background: #F0FDF4; color: #16A34A; border-color: #BBF7D0; }
+        .btn-auto-fill:active { background: #DCFCE7; }
+        .btn-auto-fill:disabled { opacity: 0.7; cursor: not-allowed; }
+
+        .info-card { background: #FFFFFF; border-radius: 16px; padding: 16px; margin-bottom: 16px; border: 1px solid #F1F5F9; box-shadow: 0 2px 10px rgba(0,0,0,0.03); }
+        .timeline-box { display: flex; flex-direction: column; gap: 15px; position: relative; }
+        .timeline-box::before { content: ''; position: absolute; left: 20px; top: 25px; bottom: 25px; width: 2px; background-color: #E2E8F0; z-index: 1; }
+        .time-point { display: flex; gap: 15px; align-items: flex-start; position: relative; z-index: 2; }
+        .time-icon { width: 40px; height: 40px; border-radius: 50%; background-color: #F0FDFA; color: #0D9488; display: flex; justify-content: center; align-items: center; font-size: 1.2em; flex-shrink: 0; border: 2px solid #FFFFFF; }
+        .time-details { flex: 1; }
+        .time-label { font-size: 0.85em; color: #64748B; margin-bottom: 4px; }
+        .time-value { font-size: 1.2em; font-weight: 700; color: #1E293B; }
+        .location-value { font-size: 0.95em; color: #475569; margin-top: 4px; }
+
+        .info-row { display: flex; justify-content: space-between; margin-bottom: 12px; font-size: 0.95em; border-bottom: 1px solid #F1F5F9; padding-bottom: 12px; flex-direction: column; gap: 6px; }
+        .info-row:last-child { margin-bottom: 0; border-bottom: none; padding-bottom: 0; }
+        .info-label { color: #64748B; font-weight: 600; display: flex; justify-content: space-between; }
+        .info-value-static { font-weight: 600; color: #1E293B; }
+        
+        .editable-field { width: 100%; box-sizing: border-box; padding: 10px; border: 1px solid #CBD5E1; border-radius: 8px; font-size: 0.95em; color: #0F766E; background: #FAFAFA; font-family: inherit; font-weight: 600; resize: vertical; min-height: 42px; transition: all 0.2s; }
+        input.editable-field { min-height: 20px; }
+        .editable-field:focus { outline: none; border-color: #0D9488; background: #FFFFFF; box-shadow: 0 0 0 2px rgba(13, 148, 136, 0.1); }
+
+        .notes-section { font-size: 0.95em; color: #334155; line-height: 1.6; background: #FFFBEB; padding: 16px; border-radius: 12px; margin-bottom: 16px; border-left: 4px solid #F59E0B; }
+        
+        .user-input-section { margin-bottom: 16px; position: relative; }
+        .user-input-section textarea { width: 100%; height: 80px; padding: 12px; box-sizing: border-box; border-radius: 12px; border: 2px dashed #94A3B8; background-color: #FFFFFF; font-family: inherit; font-size: 0.95em; color: #1E293B; resize: vertical; transition: border-color 0.2s; }
+        .user-input-section textarea:focus { outline: none; border-color: #0D9488; }
+        .save-status { position: absolute; right: 12px; bottom: 12px; font-size: 0.75em; color: #10B981; opacity: 0; transition: opacity 0.3s; pointer-events: none; font-weight: bold; }
+
+        .photo-section { background: #FFFFFF; border-radius: 16px; padding: 16px; margin-bottom: 16px; border: 1px solid #F1F5F9; box-shadow: 0 2px 10px rgba(0,0,0,0.03); }
+        .btn-camera { background: #0D9488; color: white; border: none; padding: 12px; border-radius: 12px; font-weight: 600; font-size: 0.95em; width: 100%; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: background 0.2s; }
+        .btn-camera:active { background: #0F766E; }
+        .photo-preview-container { display: flex; flex-direction: column; gap: 16px; margin-top: 16px; }
+        .photo-item { position: relative; border-radius: 12px; border: 1px solid #E2E8F0; overflow: hidden; background: #FAFAFA; }
+        .photo-item img { width: 100%; display: block; }
+        .photo-item iframe { width: 100%; height: 300px; border: none; display: block; }
+        .btn-remove-photo { position: absolute; top: 8px; right: 8px; background: rgba(0,0,0,0.7); color: white; border: none; border-radius: 50%; width: 32px; height: 32px; font-size: 16px; cursor: pointer; display: flex; align-items: center; justify-content: center; z-index: 10; }
+
+        .controls { flex-shrink: 0; background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); display: flex; justify-content: space-between; align-items: center; padding: 15px 20px; padding-bottom: max(15px, env(safe-area-inset-bottom)); border-top: 1px solid #E2E8F0; z-index: 10; gap: 10px; }
+        button.nav-btn { background: #0F172A; color: white; border: none; border-radius: 25px; font-weight: 600; font-size: 0.9em; cursor: pointer; text-align: center; display: flex; justify-content: center; align-items: center; }
+        button.nav-btn:disabled { background: #CBD5E1; color: #94A3B8; cursor: not-allowed; }
+        button.print-btn { background: #0D9488; }
+        
+        select.page-indicator {
+            flex: 1;
+            min-width: 0;
+            margin: 0 8px;
+            padding: 10px 25px 10px 15px;
+            border-radius: 20px;
+            border: 1px solid #CBD5E1;
+            background-color: #F8FAFC;
+            font-weight: 600;
+            color: #0F172A;
+            font-size: 0.9em;
+            appearance: none;
+            -webkit-appearance: none;
+            background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%230F172A' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+            background-repeat: no-repeat;
+            background-position: right 10px center;
+            background-size: 1.2em;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            overflow: hidden;
+            cursor: pointer;
+        }
+
+        @media print {
+            body, html { background-color: white !important; height: auto !important; overflow: visible !important; }
+            .app-container { max-width: 100% !important; height: auto !important; box-shadow: none !important; }
+            .content-scroll { overflow: visible !important; height: auto !important; padding: 0 !important; }
+            .page { display: none !important; animation: none !important; padding: 20px 0 !important; }
+            .page.active { display: block !important; page-break-after: avoid; }
+            body.print-all .page { display: block !important; page-break-after: always; }
+            body.print-all .page:last-child { page-break-after: auto; }
+            .controls, .btn-camera, .btn-remove-photo, .save-status, .track-btn, .dashboard-widget, .todo-section { display: none !important; }
+            .editable-field, .user-input-section textarea { border: 1px solid #000; background: #fff; height: auto; }
+            .photo-item { page-break-inside: avoid; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="app-container">
+    <div class="header-title">
+        <span>🎫 我的交通行程</span>
+    </div>
+    
+    <div class="content-scroll" id="transport-book"></div>
+    
+    <div class="controls">
+        <button class="nav-btn" onclick="prevPage()" id="btn-prev" disabled style="padding: 12px 15px; flex: 0 0 auto;">◀</button>
+        <select class="page-indicator" id="page-select" onchange="goToPage(parseInt(this.value))"></select>
+        <button class="nav-btn print-btn" onclick="handlePrint()" style="padding: 12px 15px; flex: 0 0 auto; margin-right: 8px;">🖨️</button>
+        <button class="nav-btn" onclick="nextPage()" id="btn-next" style="padding: 12px 15px; flex: 0 0 auto;">▶</button>
+    </div>
+</div>
+
+<script>
+    const transports = [
+        {
+            date: "10/12 (一) - 10/13 (二)", type: "✈️ 國際航班 (去程)", route: "台北 (TPE) ➔ 慕尼黑 (MUC)",
+            carrier: "長榮航空 (EVA Air) BR071", bookingRef: "-", departTime: "23:25", departLoc: "桃園國際機場 (TPE) - T2",
+            arriveTime: "07:35 (+1)", arriveLoc: "慕尼黑機場 (MUC) - T2", seats: "-", notes: "飛行總時間約 14h 10m。\n機型/艙等：波音777 商務艙 D"
+        },
+        {
+            date: "10/13 (二)", type: "✈️ 歐洲內陸航班", route: "慕尼黑 (MUC) ➔ 奧斯陸 (OSL)",
+            carrier: "漢莎航空 (Lufthansa) LH 2456", bookingRef: "9JPE6I",
+            departTime: "19:50", departLoc: "慕尼黑機場 (MUC) - T2", arriveTime: "22:05", arriveLoc: "奧斯陸加勒穆恩機場 (OSL)",
+            seats: "Yako Lai / Kueiching Wang : 23A,23B | Hsuhsiu Lee / Hsunyi Wang : 22A,22B | Tengchun Yang / Shu Fang : 21A,21B",
+            notes: "機型/艙等：Airbus A320 經濟艙。\n分組票價：685.54 + 685.54 + 342.46 + 343.49 EUR"
+        },
+        {
+            date: "10/15 (四)", type: "✈️ 挪威國內航班", route: "奧斯陸 (OSL) ➔ 博德 (BOO)",
+            carrier: "北歐航空 (SAS) SK 4106", bookingRef: "-",
+            departTime: "11:45", departLoc: "奧斯陸加勒穆恩機場 (OSL)", arriveTime: "13:10", arriveLoc: "博德機場 (BOO)",
+            seats: "Yako Lai / Kueiching Wang : 5A,5B | Hsuhsiu Lee / Hsunyi Wang : 5E,5F | Tengchun Yang / Shu Fang : 6A,6B",
+            notes: "機型/艙等：- Standard。\n分組票價：179.00 + 172.26 + 86.13 + 87.81 EUR"
+        },
+        {
+            date: "10/15 (四) - 10/18 (日)", type: "🚗 羅弗敦群島自駕", route: "博德 (BOO) ➔ 斯沃爾韋爾 (SVJ)",
+            carrier: "SIXT 租車", bookingRef: "9733067675", departTime: "10/15 14:00 取車", departLoc: "博德機場 (Bodø Airport) SIXT 櫃台",
+            arriveTime: "10/18 17:00 還車", arriveLoc: "斯沃爾韋爾 (Svolvær) Roald Amundsensgate 8",
+            seats: "Toyota ProAce 8人座", notes: "主駕駛：LAI YAKO。\n方案：All Inclusive Protection (含0自付額車體險與竊盜險)。\n甲地租乙地還 (One-Way)。"
+        },
+        {
+            date: "10/15 (四)", type: "⛴️ 跨海渡輪", route: "博德 (Bodø) ➔ 莫斯克內斯 (Moskenes)",
+            carrier: "TORGHATTEN", bookingRef: "CFGKELZY", departTime: "16:45", departLoc: "博德渡輪碼頭 (Bodø ferjekai)",
+            arriveTime: "20:00", arriveLoc: "莫斯克內斯渡輪碼頭 (Moskenes ferjekai)", seats: "成人票 (含座位預訂)",
+            notes: "訂票人：KUEI CHING WANG。\n航線：Bodø-Røst-Værøy-Moskenes。\n⚠️ 提醒：車內所有旅客須在登船前透過線上完成資訊登錄。"
+        },
+        {
+            date: "10/18 (日) - 10/19 (一)", type: "🚢 郵輪航程 (北行)", route: "斯沃爾韋爾 (SVJ) ➔ 特羅姆瑟 (TOS)",
+            carrier: "MS Havila Polaris", bookingRef: "Res# 433405", departTime: "22:15", departLoc: "斯沃爾韋爾碼頭 (Svolvær)",
+            arriveTime: "14:15 (+1)", arriveLoc: "特羅姆瑟碼頭 (Tromsø)", seats: "內側艙房 (Cabin #1, #2, #3)",
+            notes: "已付款。共6位成人分配3間艙房(含單人床及上層鋪位、獨立衛浴)。\n包含 10/19 於 Havrand 餐廳的早餐與午餐。"
+        },
+        {
+            date: "10/21 (三)", type: "✈️ 歐洲內陸航班", route: "特羅姆瑟 (TOS) ➔ 羅瓦涅米 (RVN)",
+            carrier: "芬蘭航空 (Finnair) AY 0542", bookingRef: "9KAWJB", departTime: "10:30", departLoc: "特羅姆瑟機場 (TOS)",
+            arriveTime: "12:50", arriveLoc: "羅瓦涅米機場 (RVN)", seats: "尚未選位（訂位系統未顯示座位號碼）",
+            notes: "機型/艙等：- 經濟艙 N\n分組票價：4,588.00 + 4,616.00 + 2,328.00 + 2,351.00 NOK。\n⚠️ 提醒：尚未選位，記得提早辦理。"
+        },
+        {
+            date: "10/22 (四) - 10/23 (五)", type: "🚆 芬蘭國鐵 VR (北極特快車)", route: "羅瓦涅米 (RVN) ➔ 赫爾辛基 (HEL)",
+            carrier: "VR 火車車次 PYO 266", bookingRef: "TUT-TH5-LEV...", departTime: "17:52", departLoc: "羅瓦涅米火車站",
+            arriveTime: "06:27 (+1)", arriveLoc: "赫爾辛基中央車站", seats: "47 車廂上層 (Coach 47, upstairs)\n臥鋪房號：209/210, 211/212, 213/214",
+            notes: "訂購房型：完整臥鋪艙房 (Whole cabin)。\nJacob & Jassica (209,210), Sissy & Sugar (211,212), Danny & Fang (213,214)。"
+        },
+        {
+            date: "10/26 (一)", type: "✈️ 歐洲內陸航班", route: "赫爾辛基 (HEL) ➔ 慕尼黑 (MUC)",
+            carrier: "漢莎航空 (Lufthansa) LH 2461", bookingRef: "9JPE6I", departTime: "12:45",
+            departLoc: "赫爾辛基萬塔機場 (HEL)", arriveTime: "14:25", arriveLoc: "慕尼黑機場 (MUC) - T2",
+            seats: "Yako Lai / Kueiching Wang : 8A,8B | Hsuhsiu Lee / Hsunyi Wang : 8F,8E | Tengchun Yang / Shu Fang : 9A,9B",
+            notes: "機型/艙等：Airbus A321neo 經濟艙。\n票價已含於去程票價中。"
+        },
+        {
+            date: "10/27 (二) - 10/28 (三)", type: "✈️ 國際航班 (回程)", route: "慕尼黑 (MUC) ➔ 台北 (TPE)",
+            carrier: "長榮航空 (EVA Air) BR072", bookingRef: "-", departTime: "11:30", departLoc: "慕尼黑機場 (MUC) - T2",
+            arriveTime: "06:30 (+1)", arriveLoc: "桃園國際機場 (TPE) - T2", seats: "-", notes: "飛行總時間約 12h 00m。\n機型/艙等：波音777 商務艙 D"
+        }
+    ];
+
+    let currentPage = 0;
+    const totalPages = transports.length + 1;
+    const container = document.getElementById('transport-book');
+    let saveTimeout;
+    let countdownInterval;
+
+    function debounce(func, wait) {
+        let timeout;
+        return function(...args) { clearTimeout(timeout); timeout = setTimeout(() => func.apply(this, args), wait); };
+    }
+    
+    function saveData(index, field, value) {
+        localStorage.setItem(`trans-${field}-${index}`, value);
+        showSaveStatus(index);
+    }
+    const debouncedSaveData = debounce((index, field, value) => { saveData(index, field, value); }, 500);
+
+    function showSaveStatus(index) {
+        const statusEl = document.getElementById(`save-status-${index}`);
+        if (statusEl) {
+            statusEl.innerText = "✓ 已存至本機"; statusEl.style.opacity = 1;
+            clearTimeout(saveTimeout); saveTimeout = setTimeout(() => { statusEl.style.opacity = 0; }, 2000);
+        }
+    }
+
+    function initDashboardWidget() {
+        const now = new Date();
+        const dateStr = now.toLocaleDateString('zh-TW', { month: 'short', day: 'numeric', weekday: 'long' });
+        document.getElementById('widget-date').innerText = dateStr;
+
+        const departureDate = new Date('2026-10-12T23:25:00+08:00').getTime();
+        clearInterval(countdownInterval);
+        
+        countdownInterval = setInterval(() => {
+            const current = new Date().getTime();
+            const diff = departureDate - current;
+            const el = document.getElementById('widget-countdown');
+            const labelEl = document.getElementById('widget-countdown-label');
+            if (!el || !labelEl) return;
+
+            if (diff > 0) {
+                labelEl.innerText = "✈️ 距離出發 (10/12 23:25) 還有";
+                const d = Math.floor(diff / (1000 * 60 * 60 * 24));
+                const h = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                const m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+                const s = Math.floor((diff % (1000 * 60)) / 1000);
+                el.innerText = `${d} 天 ${h} 時 ${m} 分 ${s} 秒`;
+            } else {
+                labelEl.innerText = "🎉 旅途進行中";
+                const passedDiff = Math.abs(diff);
+                const passedDays = Math.floor(passedDiff / (1000 * 60 * 60 * 24)) + 1;
+                el.innerText = `出發第 ${passedDays} 天`;
+            }
+        }, 1000);
+
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(
+                (position) => fetchWeather(position.coords.latitude, position.coords.longitude),
+                (error) => fetchWeather(25.0330, 121.5654)
+            );
+        } else {
+            fetchWeather(25.0330, 121.5654);
+        }
+    }
+
+    async function fetchWeather(lat, lon) {
+        try {
+            const geoRes = await fetch(`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lon}&localityLanguage=zh-tw`);
+            const geoData = await geoRes.json();
+            const locationEl = document.getElementById('widget-location');
+            if (locationEl) locationEl.innerText = `📍 ${geoData.city || geoData.locality || '未知位置'}`;
+
+            const weatherRes = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true`);
+            const weatherData = await weatherRes.json();
+            const temp = Math.round(weatherData.current_weather.temperature);
+            const code = weatherData.current_weather.weathercode;
+            
+            const wCodeMap = {
+                0: '☀️ 晴朗', 1: '🌤️ 晴時多雲', 2: '⛅ 多雲', 3: '☁️ 陰天',
+                45: '🌫️ 霧', 48: '🌫️ 霧', 51: '🌧️ 毛毛雨', 53: '🌧️ 毛毛雨', 55: '🌧️ 毛毛雨',
+                61: '🌧️ 陣雨', 63: '🌧️ 雨', 65: '🌧️ 大雨', 71: '❄️ 雪', 73: '❄️ 雪', 75: '❄️ 大雪',
+                95: '⛈️ 雷雨'
+            };
+            const wDesc = wCodeMap[code] || '🌤️ 未知氣象';
+            
+            const tempEl = document.getElementById('widget-temp');
+            const descEl = document.getElementById('widget-weather-desc');
+            if (tempEl) tempEl.innerText = `${temp}°C`;
+            if (descEl) descEl.innerText = wDesc;
+
+        } catch (e) {
+            const locationEl = document.getElementById('widget-location');
+            const tempEl = document.getElementById('widget-temp');
+            if (locationEl) locationEl.innerText = "📍 台北市 (預設)";
+            if (tempEl) tempEl.innerText = "--°C";
+        }
+    }
+
+    function simulateFetchFlightData(index, flightNum) {
+        const btn = document.getElementById(`autofill-btn-${index}`);
+        const originalText = btn.innerHTML;
+        btn.innerHTML = '⏳ 聯網抓取中...';
+        btn.disabled = true;
+        
+        setTimeout(() => {
+            const mockTerminal = ["T1", "T2", "T3"][Math.floor(Math.random() * 3)];
+            const mockGate = ["C4", "D7", "A2", "B15", "E3"][Math.floor(Math.random() * 5)];
+            const mockTime = ["22:45", "19:10", "11:05", "09:50"][Math.floor(Math.random() * 4)];
+            
+            const terminalInput = document.getElementById(`terminal-${index}`);
+            const gateInput = document.getElementById(`gate-${index}`);
+            const boardingInput = document.getElementById(`boarding-${index}`);
+            
+            if(terminalInput) terminalInput.value = mockTerminal;
+            if(gateInput) gateInput.value = mockGate;
+            if(boardingInput) boardingInput.value = mockTime;
+            
+            saveData(index, 'terminal', mockTerminal);
+            saveData(index, 'gate', mockGate);
+            saveData(index, 'boarding', mockTime);
+            
+            btn.innerHTML = '✅ 已自動填寫';
+            setTimeout(() => { btn.innerHTML = originalText; btn.disabled = false; }, 3000);
+        }, 1500);
+    }
+
+    function readFileAsDataURL(file) {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader(); reader.onload = e => resolve(e.target.result);
+            reader.onerror = reject; reader.readAsDataURL(file);
+        });
+    }
+
+    function compressImage(dataUrl) {
+        return new Promise((resolve, reject) => {
+            const img = new Image();
+            img.onload = function() {
+                const canvas = document.createElement('canvas'); const MAX_WIDTH = 800; 
+                let width = img.width, height = img.height;
+                if (width > MAX_WIDTH) { height *= MAX_WIDTH / width; width = MAX_WIDTH; }
+                canvas.width = width; canvas.height = height;
+                canvas.getContext('2d').drawImage(img, 0, 0, width, height);
+                resolve(canvas.toDataURL('image/jpeg', 0.6)); 
+            }; img.onerror = reject; img.src = dataUrl;
+        });
+    }
+
+    async function handlePhotoUpload(event, index) {
+        const files = event.target.files; if (!files || files.length === 0) return;
+        let savedPhotos = JSON.parse(localStorage.getItem(`trans-photos-arr-${index}`) || '[]');
+        for (let i = 0; i < files.length; i++) {
+            const file = files[i];
+            try {
+                const dataUrl = await readFileAsDataURL(file);
+                if (file.type === 'application/pdf') { savedPhotos.push({ type: 'pdf', data: dataUrl }); } 
+                else { savedPhotos.push({ type: 'image', data: await compressImage(dataUrl) }); }
+            } catch (err) { alert("處理檔案時發生錯誤！"); }
+        }
+        try {
+            localStorage.setItem(`trans-photos-arr-${index}`, JSON.stringify(savedPhotos));
+            renderPhotos(index, savedPhotos); showSaveStatus(index);
+        } catch (err) { alert("手機瀏覽器儲存空間不足，無法儲存所有檔案！"); }
+        event.target.value = '';
+    }
+
+    function renderPhotos(index, photos) {
+        const previewContainer = document.getElementById(`photo-preview-container-${index}`);
+        if(!previewContainer) return; previewContainer.innerHTML = ''; 
+        photos.forEach((photo, photoIndex) => {
+            const itemDiv = document.createElement('div'); itemDiv.className = 'photo-item';
+            const btn = document.createElement('button'); btn.className = 'btn-remove-photo'; btn.innerHTML = '✕';
+            btn.onclick = () => removePhoto(index, photoIndex); itemDiv.appendChild(btn);
+            if (photo.type === 'pdf') { const iframe = document.createElement('iframe'); iframe.src = photo.data; itemDiv.appendChild(iframe); } 
+            else { const img = document.createElement('img'); img.src = photo.data; itemDiv.appendChild(img); }
+            previewContainer.appendChild(itemDiv);
+        });
+    }
+
+    function removePhoto(index, photoIndex) {
+        if(confirm("確定要刪除這份文件嗎？")) {
+            let savedPhotos = JSON.parse(localStorage.getItem(`trans-photos-arr-${index}`) || '[]');
+            savedPhotos.splice(photoIndex, 1);
+            localStorage.setItem(`trans-photos-arr-${index}`, JSON.stringify(savedPhotos));
+            renderPhotos(index, savedPhotos);
+        }
+    }
+
+    function renderBook() {
+        let html = '';
+        let summaryListHTML = '';
+        transports.forEach(function(t) {
+            summaryListHTML += '<div style="margin-bottom: 12px; border-bottom: 1px dashed #E2E8F0; padding-bottom: 12px;">';
+            summaryListHTML += '<div style="font-size:0.85em; color:#0D9488; font-weight:bold; margin-bottom:4px;">' + t.date + ' | ' + t.type + '</div>';
+            summaryListHTML += '<div style="font-weight:bold; color:#1E293B;">' + t.route + '</div>';
+            summaryListHTML += '<div style="font-size:0.9em; color:#64748B;">' + t.carrier + '</div>';
+            summaryListHTML += '</div>';
+        });
+
+        let dashboardWidgetHTML = `
+            <div class="dashboard-widget">
+                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 15px;">
+                    <div>
+                        <div style="font-size: 0.9em; opacity: 0.9; margin-bottom: 4px;" id="widget-date">日期載入中...</div>
+                        <div style="font-size: 1.1em; font-weight: 700; display: flex; align-items: center; gap: 4px;" id="widget-location">📍 位置載入中...</div>
+                    </div>
+                    <div style="text-align: right;">
+                        <div style="font-size: 2.2em; font-weight: 700; line-height: 1; margin-bottom: 4px;" id="widget-temp">--°C</div>
+                        <div style="font-size: 0.9em; opacity: 0.9;" id="widget-weather-desc">--</div>
+                    </div>
+                </div>
+                <div style="background: rgba(255, 255, 255, 0.15); backdrop-filter: blur(5px); padding: 12px; border-radius: 12px; text-align: center;">
+                    <div style="font-size: 0.85em; opacity: 0.9; margin-bottom: 4px;" id="widget-countdown-label">✈️ 距離出發還有</div>
+                    <div style="font-size: 1.3em; font-weight: 700; font-variant-numeric: tabular-nums; letter-spacing: 1px;" id="widget-countdown">計算中...</div>
+                </div>
+            </div>
+        `;
+
+        let todoSectionHTML = `
+            <div class="todo-section">
+                <div class="todo-title">🚨 交通預訂與選位提醒 (尚未辦理)</div>
+                <div class="todo-item">
+                    <b>10/24 (六)</b> 赫爾辛基 ⇄ 塔林跨國渡輪尚未預訂 — 建議儘速選擇 Tallink Silja、Viking Line 或 Eckerö Line 班次，並預留港口報到與通關時間。
+                </div>
+                <div class="todo-item">
+                    <b>10/21 (三)</b> 芬蘭航空 <b>AY0542</b> (特羅姆瑟 ➔ 羅瓦涅米) 尚未選位，記得提早上網劃位。
+                </div>
+            </div>
+        `;
+
+        html += '<div class="page active" id="page-0">' +
+                dashboardWidgetHTML +
+                todoSectionHTML +
+                '<h2 class="route-title" style="margin-top: 25px;">🗺️ 北歐跨國交通總覽</h2>' +
+                '<div class="info-card">' +
+                '<h3 style="margin-top:0; margin-bottom:15px; color:#1E293B; font-size:1.1em;">🚆 行程明細表</h3>' +
+                summaryListHTML +
+                '</div>' +
+                '<div class="notes-section" style="border-left-color: #0D9488; background: #F0FDFA;">' +
+                '<strong>💡 系統功能提示：</strong><br>' +
+                '• <b>多檔案上傳</b>：點擊上傳按鈕，可「一次選擇多張照片或文件」上傳存檔。<br>' +
+                '• <b>本機存儲</b>：您所輸入的備註與照片將自動保存在您目前的設備中。<br>' +
+                '• <b>智慧列印</b>：在首頁點擊列印將匯出全本手冊；在各分頁點擊，則僅匯出該段行程。' +
+                '</div>' +
+                '</div>';
+
+        transports.forEach((item, index) => {
+            let pageId = index + 1;
+            let icon = '📍', arriveIcon = '📍';
+            if (item.type.includes('✈️')) { icon = '🛫'; arriveIcon = '🛬'; }
+            if (item.type.includes('🚆')) { icon = '🚉'; arriveIcon = '🚉'; }
+            if (item.type.includes('🚢') || item.type.includes('⛴️')) { icon = '⚓'; arriveIcon = '⚓'; }
+            if (item.type.includes('🚗')) { icon = '🚘'; arriveIcon = '🚘'; }
+
+            let flightActionGroup = '';
+            let gateBoardingHTML = '';
+
+            if (item.type.includes('✈️')) {
+                let match = item.carrier.match(/[A-Z0-9]{2}\s?\d{2,4}/);
+                let flightNum = match ? match[0].replace(/\s/g, '') : item.carrier;
+                
+                flightActionGroup = `
+                    <div style="display: flex; gap: 10px; margin-bottom: 16px;">
+                        <a href="https://www.google.com/search?q=航班狀態+${flightNum}" target="_blank" class="track-btn" style="flex: 1;">📡 Google 查狀態</a>
+                        <button id="autofill-btn-${index}" class="track-btn btn-auto-fill" onclick="simulateFetchFlightData(${index}, '${flightNum}')" style="flex: 1;">🔄 自動載入(模擬)</button>
+                    </div>
+                `;
+
+                gateBoardingHTML = `
+                    <div class="info-row" style="flex-direction: row; gap: 8px;">
+                        <div style="flex: 1;">
+                            <span class="info-label">✏️ 航站</span>
+                            <input type="text" class="editable-field" style="padding: 10px 5px; text-align: center;" id="terminal-${index}" oninput="debouncedSaveData(${index}, 'terminal', this.value)" placeholder="T2">
+                        </div>
+                        <div style="flex: 1;">
+                            <span class="info-label">✏️ 閘門</span>
+                            <input type="text" class="editable-field" style="padding: 10px 5px; text-align: center;" id="gate-${index}" oninput="debouncedSaveData(${index}, 'gate', this.value)" placeholder="C4">
+                        </div>
+                        <div style="flex: 1.2;">
+                            <span class="info-label">✏️ 登機時間</span>
+                            <input type="text" class="editable-field" style="padding: 10px 5px; text-align: center;" id="boarding-${index}" oninput="debouncedSaveData(${index}, 'boarding', this.value)" placeholder="22:45">
+                        </div>
+                    </div>
+                `;
+            }
+
+            html += `
+                <div class="page" id="page-${pageId}">
+                    <div class="type-badge">${item.type} | ${item.date}</div>
+                    <h2 class="route-title">${item.route}</h2>
+                    
+                    ${flightActionGroup}
+
+                    <div class="info-card timeline-box">
+                        <div class="time-point">
+                            <div class="time-icon">${icon}</div>
+                            <div class="time-details">
+                                <div class="time-label">出發 (Departure)</div>
+                                <div class="time-value">${item.departTime}</div>
+                                <div class="location-value">${item.departLoc}</div>
+                            </div>
+                        </div>
+                        <div class="time-point">
+                            <div class="time-icon">${arriveIcon}</div>
+                            <div class="time-details">
+                                <div class="time-label">抵達 (Arrival)</div>
+                                <div class="time-value">${item.arriveTime}</div>
+                                <div class="location-value">${item.arriveLoc}</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="info-card">
+                        <div class="info-row" style="flex-direction: row; border-bottom: 1px solid #F1F5F9; margin-bottom: 12px;">
+                            <span class="info-label">班次/載具</span>
+                            <span class="info-value-static">${item.carrier}</span>
+                        </div>
+                        
+                        ${gateBoardingHTML}
+
+                        <div class="info-row">
+                            <span class="info-label">✏️ 訂位代號 / 憑證號</span>
+                            <textarea class="editable-field" id="bookRef-${index}" oninput="debouncedSaveData(${index}, 'bookRef', this.value)" placeholder="請輸入訂位代號..."></textarea>
+                        </div>
+                        <div class="info-row" style="border-bottom: none; padding-bottom: 0;">
+                            <span class="info-label">✏️ 座位 / 艙房分配</span>
+                            <textarea class="editable-field" id="seatAlloc-${index}" oninput="debouncedSaveData(${index}, 'seatAlloc', this.value)" placeholder="請輸入座位資訊..."></textarea>
+                        </div>
+                    </div>
+
+                    <div class="notes-section">
+                        <strong>⚠️ 系統原始備註：</strong><br>${item.notes.replace(/\n/g, '<br>')}
+                    </div>
+
+                    <div class="user-input-section">
+                        <div style="font-weight: 600; color: #64748B; margin-bottom: 8px;">✏️ 個人補充事項</div>
+                        <textarea id="note-${index}" oninput="debouncedSaveData(${index}, 'note', this.value)" placeholder="點此輸入您的交通備忘錄... (如：行李重量、集合點等)"></textarea>
+                        <span class="save-status" id="save-status-${index}"></span>
+                    </div>
+
+                    <div class="photo-section">
+                        <h3 style="margin: 0 0 10px 0; font-size: 1.05em; color: #0F172A;">📸 票券與文件存檔 (可選多張)</h3>
+                        <input type="file" id="file-upload-${index}" accept="image/*,application/pdf" multiple style="display:none;" onchange="handlePhotoUpload(event, ${index})">
+                        <button class="btn-camera" onclick="document.getElementById('file-upload-${index}').click()">
+                            ➕ 點此選擇相簿照片、文件或拍照
+                        </button>
+                        <div class="photo-preview-container" id="photo-preview-container-${index}"></div>
+                    </div>
+                </div>
+            `;
+        });
+        
+        container.innerHTML = html;
+
+        transports.forEach((item, index) => {
+            const fields = ['bookRef', 'seatAlloc', 'note', 'terminal', 'gate', 'boarding'];
+            fields.forEach(f => {
+                const val = localStorage.getItem(`trans-${f}-${index}`);
+                const el = document.getElementById(`${f}-${index}`);
+                if (val !== null && el) {
+                    el.value = val;
+                } else if (val === null && el && (f === 'bookRef' || f === 'seatAlloc')) {
+                    el.value = f === 'bookRef' ? item.bookingRef : item.seats;
+                }
+            });
+
+            const savedPhotosArr = JSON.parse(localStorage.getItem(`trans-photos-arr-${index}`) || '[]');
+            if (savedPhotosArr.length > 0) renderPhotos(index, savedPhotosArr);
+        });
+
+        initPageSelect();
+        updateButtons();
+        
+        if (currentPage === 0) {
+            initDashboardWidget();
+        }
+    }
+
+    function initPageSelect() {
+        const select = document.getElementById('page-select');
+        const tripStartDate = new Date('2026-10-12T00:00:00');
+        let html = '<option value="0">🏠 首頁總覽</option>';
+        
+        transports.forEach((t, i) => {
+            let dayTxt = `Day ?`;
+            let dateMatch = t.date.match(/(\d{1,2})\/(\d{1,2})/);
+            if(dateMatch) {
+                let m = parseInt(dateMatch[1]);
+                let d = parseInt(dateMatch[2]);
+                let curDate = new Date(`2026-${m}-${d}T00:00:00`);
+                let diffDays = Math.round((curDate - tripStartDate) / (1000 * 60 * 60 * 24)) + 1;
+                dayTxt = `Day ${diffDays} (${m}/${d})`;
+            }
+            
+            let typeIcon = t.type.split(' ')[0]; 
+            let routeParts = t.route.split(' ➔ ');
+            let shortRoute = routeParts.length > 1 ? routeParts[1] : t.route; 
+            
+            html += `<option value="${i + 1}">${dayTxt} ${typeIcon} 往 ${shortRoute}</option>`;
+        });
+        select.innerHTML = html;
+    }
+
+    function goToPage(index) {
+        if (index === currentPage) return;
+        document.getElementById(`page-${currentPage}`).classList.remove('active');
+        currentPage = index;
+        document.getElementById(`page-${currentPage}`).classList.add('active');
+        updateButtons();
+        if (currentPage === 0) initDashboardWidget();
+    }
+
+    function updateButtons() {
+        document.getElementById('btn-prev').disabled = currentPage === 0;
+        document.getElementById('btn-next').disabled = currentPage === totalPages - 1;
+        document.getElementById('page-select').value = currentPage; 
+        document.getElementById('transport-book').scrollTop = 0; 
+    }
+
+    function nextPage() {
+        if (currentPage < totalPages - 1) {
+            document.getElementById(`page-${currentPage}`).classList.remove('active');
+            currentPage++;
+            document.getElementById(`page-${currentPage}`).classList.add('active');
+            updateButtons();
+            if (currentPage === 0) initDashboardWidget();
+        }
+    }
+
+    function prevPage() {
+        if (currentPage > 0) {
+            document.getElementById(`page-${currentPage}`).classList.remove('active');
+            currentPage--;
+            document.getElementById(`page-${currentPage}`).classList.add('active');
+            updateButtons();
+            if (currentPage === 0) initDashboardWidget();
+        }
+    }
+
+    let touchStartX = 0; let touchEndX = 0;
+    const appContainer = document.querySelector('.app-container');
+    appContainer.addEventListener('touchstart', e => { touchStartX = e.changedTouches[0].screenX; }, {passive: true});
+    appContainer.addEventListener('touchend', e => { touchEndX = e.changedTouches[0].screenX; handleSwipe(); }, {passive: true});
+    function handleSwipe() { const swipeThreshold = 50; if (touchEndX < touchStartX - swipeThreshold) nextPage(); if (touchEndX > touchStartX + swipeThreshold) prevPage(); }
+
+    function handlePrint() {
+        if (currentPage === 0) { document.body.classList.add('print-all'); } 
+        else { document.body.classList.remove('print-all'); }
+        setTimeout(() => { window.print(); }, 100);
+    }
+
+    renderBook();
+</script>
+</body>
+</html>

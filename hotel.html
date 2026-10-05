@@ -1,0 +1,1019 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>北歐旅遊全住宿手冊 (Firebase 雲端同步版 v2)</title>
+    <style>
+        html, body {
+            margin: 0; padding: 0; width: 100%; height: 100%;
+            background-color: #E2E8F0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            overflow: hidden;
+        }
+        
+        .app-container {
+            width: 100%; max-width: 600px; height: 100dvh;
+            margin: 0 auto; background-color: #F8FAFC;
+            display: flex; flex-direction: column; position: relative;
+            box-shadow: 0 0 20px rgba(0,0,0,0.05);
+        }
+
+        .header-title {
+            background-color: #3B82F6; padding: 16px;
+            padding-top: max(16px, env(safe-area-inset-top));
+            text-align: center; font-size: 1.2em; font-weight: 700;
+            color: #FFFFFF; flex-shrink: 0; z-index: 10;
+        }
+
+        .content-scroll {
+            flex: 1; overflow-y: auto; position: relative;
+            padding-bottom: 20px; -webkit-overflow-scrolling: touch;
+        }
+        .content-scroll::-webkit-scrollbar { width: 4px; }
+        .content-scroll::-webkit-scrollbar-thumb { background-color: #CBD5E1; border-radius: 4px; }
+
+        .page { display: none; padding: 24px; animation: fadeIn 0.3s ease-in-out; }
+        .page.active { display: block; }
+        
+        .type-badge {
+            display: inline-flex; align-items: center; gap: 6px;
+            background-color: #2563EB; color: white; padding: 8px 16px;
+            border-radius: 20px; font-size: 0.9em; font-weight: 600;
+            margin-bottom: 15px; box-shadow: 0 2px 6px rgba(37, 99, 235, 0.3);
+        }
+        
+        .hotel-name {
+            font-size: 1.4em; color: #0F172A; margin: 0 0 20px 0;
+            line-height: 1.4; display: flex; align-items: center; gap: 10px;
+        }
+
+        .info-card {
+            background: #FFFFFF; border-radius: 16px; padding: 16px;
+            margin-bottom: 16px; border: 1px solid #F1F5F9;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.03);
+        }
+
+        .info-row {
+            display: flex; justify-content: space-between; margin-bottom: 12px;
+            font-size: 0.95em; border-bottom: 1px solid #F1F5F9; padding-bottom: 12px;
+            flex-direction: column; gap: 6px;
+        }
+        .info-row.horizontal { flex-direction: row; align-items: center; }
+        .info-row:last-child { margin-bottom: 0; border-bottom: none; padding-bottom: 0; }
+        .info-label { color: #64748B; font-weight: 600; display: flex; justify-content: space-between; }
+        .info-value-static { font-weight: 600; color: #1E293B; text-align: right; word-break: break-word; }
+        
+        .editable-field {
+            width: 100%; box-sizing: border-box; padding: 10px; border: 1px solid #CBD5E1; 
+            border-radius: 8px; font-size: 0.95em; color: #2563EB; background: #FAFAFA; 
+            font-family: inherit; font-weight: 600; resize: vertical; min-height: 42px;
+            transition: all 0.2s;
+        }
+        .editable-field:focus { outline: none; border-color: #2563EB; background: #FFFFFF; box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.1); }
+
+        .payment-section {
+            background: #FFFFFF; border-radius: 16px; padding: 16px; margin-bottom: 16px;
+            border: 1px solid #F1F5F9; box-shadow: 0 2px 10px rgba(0,0,0,0.03);
+        }
+        .payment-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+        .payment-row:last-child { margin-bottom: 0; }
+        .payment-input {
+            flex: 1; padding: 8px 12px; border: 1px solid #CBD5E1; border-radius: 8px;
+            font-size: 0.95em; color: #1E293B; background: #FAFAFA; text-align: right;
+        }
+        .payment-input:focus { outline: none; border-color: #2563EB; background: #FFF; }
+
+        .climate-section {
+            font-size: 0.95em; color: #1E40AF; line-height: 1.6;
+            background: #EFF6FF; padding: 16px; border-radius: 12px;
+            margin-bottom: 16px; border-left: 4px solid #3B82F6;
+            display: flex; flex-direction: column; gap: 6px;
+        }
+
+        .notes-section {
+            font-size: 0.95em; color: #334155; line-height: 1.6;
+            background: #F1F5F9; padding: 16px; border-radius: 12px; margin-bottom: 16px;
+        }
+
+        .user-input-section { margin-bottom: 16px; position: relative; }
+        .user-input-section textarea {
+            width: 100%; height: 80px; padding: 12px; box-sizing: border-box;
+            border-radius: 12px; border: 2px dashed #94A3B8;
+            background-color: #FFFFFF; font-family: inherit; font-size: 0.95em;
+            color: #1E293B; resize: vertical; transition: border-color 0.2s;
+        }
+        .user-input-section textarea:focus { outline: none; border-color: #2563EB; }
+        
+        .save-status {
+            position: absolute; right: 12px; bottom: 12px; font-size: 0.75em;
+            color: #10B981; opacity: 0; transition: opacity 0.3s; pointer-events: none;
+        }
+
+        .photo-section {
+            background: #FFFFFF; border-radius: 16px; padding: 16px; margin-bottom: 16px;
+            border: 1px solid #F1F5F9; box-shadow: 0 2px 10px rgba(0,0,0,0.03);
+        }
+        .btn-camera {
+            background: #3B82F6; color: white; border: none; padding: 12px; border-radius: 12px;
+            font-weight: 600; font-size: 0.95em; width: 100%; cursor: pointer; display: flex;
+            align-items: center; justify-content: center; gap: 8px; transition: background 0.2s;
+        }
+        .btn-camera:active { background: #2563EB; }
+        
+        .photo-preview-container { display: flex; flex-direction: column; gap: 16px; margin-top: 16px; }
+        .photo-item { position: relative; border-radius: 12px; border: 1px solid #E2E8F0; overflow: hidden; background: #FAFAFA; }
+        .photo-item img { width: 100%; display: block; }
+        .photo-item iframe { width: 100%; height: 300px; border: none; display: block; }
+        .btn-remove-photo {
+            position: absolute; top: 8px; right: 8px; background: rgba(0,0,0,0.7); color: white;
+            border: none; border-radius: 50%; width: 32px; height: 32px; font-size: 16px; cursor: pointer;
+            display: flex; align-items: center; justify-content: center; z-index: 10;
+        }
+
+        .map-container {
+            border-radius: 16px; overflow: hidden; height: 220px;
+            background-color: #E2E8F0; position: relative; margin-bottom: 16px;
+        }
+        .map-container iframe { width: 100%; height: 100%; border: none; }
+        
+        .btn-web {
+            display: block; text-align: center; background-color: #EFF6FF;
+            color: #1E40AF; text-decoration: none; padding: 12px;
+            border-radius: 12px; font-weight: 600; font-size: 0.95em;
+            margin-bottom: 16px; border: 1px solid #BFDBFE;
+        }
+
+        .controls {
+            flex-shrink: 0; background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px); display: flex; justify-content: space-between;
+            align-items: center; padding: 15px 20px;
+            padding-bottom: max(15px, env(safe-area-inset-bottom));
+            border-top: 1px solid #E2E8F0; z-index: 10; gap: 10px;
+        }
+        
+        button.nav-btn {
+            background: #1E293B; color: white; border: none;
+            border-radius: 25px; font-weight: 600;
+            font-size: 0.9em; cursor: pointer; text-align: center;
+        }
+        button.nav-btn:disabled { background: #CBD5E1; color: #94A3B8; cursor: not-allowed; }
+        button.print-btn { background: #3B82F6; }
+        
+        /* 下拉選單樣式 */
+        .nav-select {
+            flex: 1;
+            padding: 10px 8px;
+            border-radius: 12px;
+            border: 1px solid #94A3B8;
+            background-color: #FFFFFF;
+            font-weight: 600;
+            color: #0F172A;
+            font-size: 0.95em;
+            text-align: center;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            overflow: hidden;
+            margin: 0 8px;
+        }
+
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+            70% { box-shadow: 0 0 0 6px rgba(16, 185, 129, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+        }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        #login-overlay {
+            position: fixed; inset: 0; z-index: 9999; display: none;
+            align-items: center; justify-content: center; padding: 20px;
+            background: linear-gradient(160deg, #1E3A8A, #3B82F6);
+        }
+        .login-box {
+            width: 100%; max-width: 360px; background: #fff; border-radius: 16px;
+            padding: 28px 24px; box-shadow: 0 10px 40px rgba(0,0,0,0.25); box-sizing: border-box;
+        }
+        .login-box h2 { margin: 0 0 6px; color: #0F172A; font-size: 1.3em; text-align: center; }
+        .login-box p.sub { margin: 0 0 20px; color: #64748B; font-size: 0.9em; text-align: center; }
+        .login-box input {
+            width: 100%; box-sizing: border-box; padding: 12px; margin-bottom: 12px;
+            border: 1px solid #CBD5E1; border-radius: 8px; font-size: 16px;
+        }
+        .login-box button.primary {
+            width: 100%; padding: 12px; border: none; border-radius: 8px;
+            background: #3B82F6; color: #fff; font-size: 1em; font-weight: 600; cursor: pointer;
+        }
+        .login-box button.primary:disabled { opacity: .6; }
+        .login-box .link-btn {
+            background: none; border: none; color: #3B82F6; font-size: 0.88em;
+            cursor: pointer; padding: 8px 4px; margin-top: 6px;
+        }
+        #login-msg { min-height: 1.3em; margin: 4px 0 8px; font-size: 0.88em; color: #DC2626; text-align: center; }
+        #login-msg.ok { color: #059669; }
+        #btn-logout {
+            display: none; position: absolute; right: 12px; top: max(14px, env(safe-area-inset-top));
+            background: rgba(255,255,255,0.2); color: #fff; border: 1px solid rgba(255,255,255,0.5);
+            border-radius: 6px; padding: 4px 10px; font-size: 0.7em; cursor: pointer;
+        }
+        .header-title { position: relative; }
+        .readonly-mode .btn-camera, .readonly-mode .btn-remove-photo { display: none !important; }
+        .readonly-mode .editable-field, .readonly-mode .payment-input { background: #F1F5F9; cursor: default; }
+
+        @media print {
+            #login-overlay, #btn-logout { display: none !important; }
+            body, html { background-color: white !important; height: auto !important; overflow: visible !important; }
+            .app-container { max-width: 100% !important; height: auto !important; box-shadow: none !important; }
+            .content-scroll { overflow: visible !important; height: auto !important; padding: 0 !important; }
+            
+            .page { display: none !important; animation: none !important; padding: 20px 0 !important; }
+            .page.active { display: block !important; page-break-after: avoid; }
+            
+            body.print-all .page { display: block !important; page-break-after: always; }
+            body.print-all .page:last-child { page-break-after: auto; }
+            
+            .controls, .btn-camera, .btn-remove-photo, .save-status, .btn-web, .weather-loading { display: none !important; }
+            .editable-field, .user-input-section textarea { border: 1px solid #000; background: #fff; height: auto; }
+            .payment-input { border: none !important; background: transparent !important; padding: 0 !important; text-align: right !important;}
+            .photo-item { page-break-inside: avoid; }
+            .map-container { height: 300px !important; }
+            #upcoming-deadlines-container, #global-sync-card { display: none !important; }
+        }
+    </style>
+</head>
+<body>
+
+<div id="login-overlay">
+    <form class="login-box" onsubmit="doLogin(event)">
+        <h2>🔒 北歐旅遊住宿手冊</h2>
+        <p class="sub">請登入以查看內容</p>
+        <input type="email" id="login-email" placeholder="Email" autocomplete="username" required>
+        <input type="password" id="login-password" placeholder="密碼" autocomplete="current-password" required>
+        <div id="login-msg"></div>
+        <button type="submit" class="primary" id="login-btn">登入</button>
+        <div style="text-align:center;">
+            <button type="button" class="link-btn" onclick="doResetPassword()">忘記密碼？</button>
+            <button type="button" class="link-btn" id="signup-btn" style="display:none;" onclick="doSignup()">註冊新帳號</button>
+        </div>
+    </form>
+</div>
+
+<div class="app-container">
+    <div class="header-title">🏨 我的住宿手冊<button id="btn-logout" onclick="doLogout()">登出</button></div>
+    <div class="content-scroll" id="accom-book"></div>
+    <div class="controls">
+        <button class="nav-btn" onclick="prevPage()" id="btn-prev" disabled style="flex: 0.2; padding: 12px 10px;">◀</button>
+        
+        <!-- 下拉選單 -->
+        <select id="page-select" class="nav-select" onchange="goToPage(parseInt(this.value))"></select>
+        
+        <button class="nav-btn print-btn" onclick="handlePrint()" style="flex: 0.3; padding: 12px 10px;">🖨️ 列印</button>
+        <button class="nav-btn" onclick="nextPage()" id="btn-next" style="flex: 0.2; padding: 12px 10px;">▶</button>
+    </div>
+</div>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+    import { initializeFirestore, doc, setDoc, getDoc, deleteDoc, collection, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+    import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, sendEmailVerification, signOut, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyC_RV0Qih2UGdF7tvZLRvdeB-bRJnxbQ0o",
+        authDomain: "aurora-travel-manual.firebaseapp.com",
+        projectId: "aurora-travel-manual",
+        storageBucket: "aurora-travel-manual.firebasestorage.app",
+        messagingSenderId: "1058873996951",
+        appId: "1:1058873996951:web:26ae7eecc016c61217dbd2"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    // 開關：false = 不需登入、所有人都能編輯、資料全部雲端同步；true = 需登入 + 管理者/一般使用者權限
+    const REQUIRE_LOGIN = false;
+    const NOTE_LOCAL = REQUIRE_LOGIN; // 個人補充事項是否只存本機
+    const ALLOW_SIGNUP = true; // 使用者可自行註冊；註冊後須點信中連結驗證 Email，且 Email 須在 Firestore 規則的名單內才讀得到資料
+    const db = initializeFirestore(app, { experimentalAutoDetectLongPolling: true });
+
+    const stays = [
+        { date: "10/13 - 10/15 (奧斯陸)", hotel: "BJØRVIKA APARTMENTS", address: "Schweigaardsgate 15B, 0191 Oslo", phone: "+47 48 60 53 33", checkIn: "15:00 起", checkOut: "11:00 前", room: "大型雙臥室公寓 & 單臥室公寓", bookingRef: "確認碼: 5767.848.273\nPIN碼: 5289", lat: 59.9139, lon: 10.7522, notes: "入住人數：6位成人。抵達前需支付全額並簽署租賃合約。入住時須支付 NOK 5000 損壞押金。", mapQuery: "Schweigaardsgate+15B,+0191+Oslo", webUrl: "https://www.google.com/search?q=BJØRVIKA+APARTMENTS,+Teaterplassen,+Oslo", paymentDeadline: "2026-09-29", deadlineNote: "入住前 14 天需線上預付，此日前可免費取消" },
+        { date: "10/15 - 10/17 (瑟弗根)", hotel: "The Tide - Rorbuer", address: "Besselvågveien 8A, 8392 Sørvågen", phone: "+47 76 09 21 00", checkIn: "16:00 - 23:00", checkOut: "11:00 前", room: "海景高級小屋", bookingRef: "確認碼: 6311.068.839\nPIN碼: 2677", lat: 67.8893, lon: 13.0207, notes: "入住人數：6位成人。小屋位於港邊，距離接待櫃台約700公尺。", mapQuery: "Besselvågveien+8A,+8392+Sørvågen", webUrl: "https://www.google.com/search?q=The+Tide+-+Rorbuer+Sørvågen" },
+        { date: "10/17 - 10/18 (巴爾斯塔)", hotel: "謝爾斯塔漁人碼頭公寓", address: "Moloveien 41, 8373 Ballstad", phone: "+47 40 46 33 33", checkIn: "15:00 - 21:00", checkOut: "08:00 - 11:00", room: "三臥室房屋", bookingRef: "確認碼: 5967.528.612\nPIN碼: 2370", lat: 68.0722, lon: 13.5511, notes: "入住人數：6位成人。無須預先付款，將於入住期間以 NOK 結帳。", mapQuery: "Moloveien+41,+8373+Ballstad", webUrl: "https://www.solsiden-brygge.no/", paymentDeadline: "2026-10-09", deadlineNote: "前可免費取消 (現場付款)" },
+        { date: "10/19 - 10/21 (特羅姆瑟)", hotel: "Skaret by VANDER", address: "25 Storgata, 9008 Tromsø", phone: "+47 48 60 53 33", checkIn: "15:00 起", checkOut: "11:00 前", room: "海景雙臥室公寓", bookingRef: "確認碼: 6984.388.843\nPIN碼: 0746", lat: 69.6492, lon: 18.9553, notes: "入住人數：6位成人。館內無接待櫃台，入住前14天會收取 NOK 5000 損壞押金。", mapQuery: "Storgata+25,+9008+Tromsø", webUrl: "https://vanderapartments.com/tromso", paymentDeadline: "2026-10-04", deadlineNote: "前可免費取消" },
+        { date: "10/21 - 10/22 (羅瓦涅米)", hotel: "北極城市酒店", address: "Pekankatu 9, Rovaniemi", phone: "請查閱訂房信件確認", checkIn: "15:00 以後", checkOut: "12:00 以前", room: "經典雙人房 * 3間", bookingRef: "訂單編號: ORD0029814012 / 14004\n飯店確認號: 54259329 / 331 / 207", lat: 66.5039, lon: 25.7294, notes: "包含 10/22 早餐。入住名單：LAI YAKO, LEE HSUHSIU, YANG TENGCHUN。", mapQuery: "Pekankatu+9,+Rovaniemi", webUrl: "https://arcticcityhotel.fi/", paymentDeadline: "2026-10-18", deadlineNote: "10/18 已自動扣款 (取消期限 10/21 04:00)" },
+        { date: "10/23 - 10/26 (赫爾辛基)", hotel: "Bob W Helsinki City Centre", address: "Vuorikatu 18 B, 00100 Helsinki", phone: "+358 9 42450197", checkIn: "15:00 起", checkOut: "11:00 前", room: "3 Bedroom - Kitchen - Sauna - Balcony", bookingRef: "確認碼: 6698.147.253\nPIN碼: 3424", lat: 60.1695, lon: 24.9354, notes: "入住人數：6位成人。房價包含附近咖啡廳早餐 (一至五 07:30-10:30，六 07:30-12:00，日 09:00-12:00)。", mapQuery: "Vuorikatu+18+B,+00100+Helsinki", webUrl: "https://bobw.co/", paymentDeadline: "2026-10-19", deadlineNote: "前可免費取消" },
+        { date: "10/26 - 10/27 (慕尼黑)", hotel: "宜必思尚品慕尼黑機場酒店", address: "Nordallee 31, Freising", phone: "請查閱訂房信件確認", checkIn: "15:00 以後", checkOut: "12:00 以前", room: "時尚標準雙床房 * 3間", bookingRef: "訂單編號: ORD0029843565\n飯店確認號: 2610260500", lat: 48.3537, lon: 11.7501, notes: "不含餐食。入住名單：LEE HSUHSIU, YANG TENGCHUN, LAI YAKO。", mapQuery: "Nordallee+31,+Freising", webUrl: "https://all.accor.com/", paymentDeadline: "2026-10-23", deadlineNote: "10/23 已自動扣款 (取消期限 10/26 06:59)" }
+    ];
+
+    let currentPage = 0;
+    const totalPages = stays.length + 1;
+    const container = document.getElementById('accom-book');
+    let saveTimeout;
+
+    let syncError = null;
+    const MAX_DOC_CHARS = 900000;
+
+    function updateGlobalSyncTime() {
+        const timeEl = document.getElementById('global-sync-time');
+        if (timeEl && syncError) { timeEl.innerText = syncError; return; }
+        if (timeEl) {
+            const now = new Date();
+            const timeString = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}:${now.getSeconds().toString().padStart(2, '0')}`;
+            timeEl.innerText = `最後同步時間：${timeString}`;
+        }
+    }
+
+    let isAdmin = !REQUIRE_LOGIN;
+    let currentEmail = '';
+    const noteKey = (i) => `personalNote:${currentEmail}:${i}`;
+    function loadLocalNote(i) { try { return localStorage.getItem(noteKey(i)); } catch (e) { return null; } }
+    function saveLocalNote(i, v) {
+        try { localStorage.setItem(noteKey(i), v); } catch (e) { console.warn("本機儲存失敗", e); return; }
+        const el = document.getElementById(`save-status-${i}`);
+        if (el) { el.innerText = "✓ 已存於此裝置"; el.style.opacity = 1; setTimeout(() => { el.style.opacity = 0; }, 1500); }
+    }
+
+    async function writeToFirebase(index, field, value) {
+        if (!isAdmin) return;
+        try {
+            const docRef = doc(db, "Accommodations", `stay_${index}`);
+            await setDoc(docRef, { [field]: value }, { merge: true });
+            showSaveStatus(index);
+            updateGlobalSyncTime(); 
+        } catch (error) {
+            console.error("寫入 Firebase 失敗:", error);
+            syncError = `同步失敗：${error.code || error.message}`;
+            updateGlobalSyncTime();
+        }
+    }
+
+    const saveTimers = {};
+    window.saveData = function(index, field, value) {
+        if (field === 'note' && NOTE_LOCAL) { saveLocalNote(index, value); return; }
+        if (!isAdmin) return;
+        const key = `${index}-${field}`;
+        clearTimeout(saveTimers[key]);
+        saveTimers[key] = setTimeout(() => writeToFirebase(index, field, value), 800);
+    };
+
+    const PAY_MEMBERS = ["Jacob", "Jassica", "Danny", "Fang", "Sugar", "Sissy"];
+    const CURRENCIES = [
+        { code: "TWD", name: "新台幣" }, { code: "EUR", name: "歐元" }, { code: "NOK", name: "挪威克朗" },
+        { code: "SEK", name: "瑞典克朗" }, { code: "USD", name: "美元" }, { code: "JPY", name: "日圓" },
+        { code: "GBP", name: "英鎊" }
+    ];
+
+    function parsePayment(p) {
+        let currency = p.currency || '';
+        let amount = (p.amount === undefined || p.amount === null) ? '' : String(p.amount);
+        if (!currency) {
+            const m = amount.trim().match(/^([A-Za-z]{3})\s*([\d.,]+)$/);
+            if (m) { currency = m[1].toUpperCase(); amount = m[2]; }
+        }
+        amount = amount.replace(/,/g, '');
+        return { currency, amount, payer: p.payer || '' };
+    }
+    function fillPayment(index, p) {
+        if (!p) return;
+        const v = parsePayment(p);
+        const set = (id, val) => {
+            const el = document.getElementById(id);
+            if (el && document.activeElement !== el && el.value !== val) el.value = val;
+        };
+        set(`pay-currency-${index}`, v.currency);
+        set(`pay-amount-${index}`, v.amount);
+        set(`pay-payer-${index}`, v.payer);
+    }
+
+    window.savePayment = function(index) {
+        const status = document.getElementById(`pay-status-${index}`).value;
+        const date = document.getElementById(`pay-date-${index}`).value;
+        const amount = document.getElementById(`pay-amount-${index}`).value;
+        const currency = document.getElementById(`pay-currency-${index}`).value;
+        const payer = document.getElementById(`pay-payer-${index}`).value;
+        writeToFirebase(index, "payment", { status, date, currency, amount, payer });
+    };
+
+    function showSaveStatus(index) {
+        const statusEl = document.getElementById(`save-status-${index}`);
+        if (statusEl) {
+            statusEl.innerText = "✓ 雲端已同步";
+            statusEl.style.opacity = 1;
+            clearTimeout(saveTimeout);
+            saveTimeout = setTimeout(() => { statusEl.style.opacity = 0; }, 2000);
+        }
+    }
+
+    const DB_NAME = 'TravelManualDB';
+    const STORE_NAME = 'AccomPhotos';
+    
+    function initDB() {
+        return new Promise((resolve, reject) => {
+            const request = indexedDB.open(DB_NAME, 1);
+            request.onupgradeneeded = e => e.target.result.createObjectStore(STORE_NAME);
+            request.onsuccess = () => resolve(request.result);
+            request.onerror = () => reject(request.error);
+        });
+    }
+
+    async function savePhotosToDB(index, photosArr) {
+        try {
+            const db_local = await initDB();
+            const tx = db_local.transaction(STORE_NAME, 'readwrite');
+            tx.objectStore(STORE_NAME).put(photosArr, `photos-${index}`);
+            return new Promise(resolve => tx.oncomplete = resolve);
+        } catch(e) {
+            console.warn("無法寫入本機照片:", e);
+        }
+    }
+
+    async function getPhotosFromDB(index) {
+        try {
+            const db_local = await initDB();
+            const tx = db_local.transaction(STORE_NAME, 'readonly');
+            const request = tx.objectStore(STORE_NAME).get(`photos-${index}`);
+            return new Promise((resolve, reject) => {
+                request.onsuccess = () => resolve(request.result || []);
+                request.onerror = () => reject(request.error);
+            });
+        } catch(e) {
+            throw e; 
+        }
+    }
+
+    function readFileAsDataURL(file) {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = e => resolve(e.target.result);
+            reader.onerror = reject;
+            reader.readAsDataURL(file);
+        });
+    }
+
+    function compressImage(dataUrl) {
+        return new Promise((resolve, reject) => {
+            const img = new Image();
+            img.onload = function() {
+                const canvas = document.createElement('canvas');
+                let width = img.width; let height = img.height;
+                if (width > 800) { height *= 800 / width; width = 800; }
+                canvas.width = width; canvas.height = height;
+                canvas.getContext('2d').drawImage(img, 0, 0, width, height);
+                resolve(canvas.toDataURL('image/jpeg', 0.6));
+            };
+            img.onerror = reject; img.src = dataUrl;
+        });
+    }
+
+    window.handlePhotoUpload = async function(event, index) {
+        const files = event.target.files;
+        if (!files || files.length === 0) return;
+        let ok = 0;
+        for (const file of files) {
+            try {
+                const dataUrl = await readFileAsDataURL(file);
+                let item;
+                if (file.type === 'application/pdf') {
+                    if (dataUrl.length > MAX_DOC_CHARS) {
+                        alert(`「${file.name}」超過約 0.9MB，無法雲端同步，請改用照片或截圖。`);
+                        continue;
+                    }
+                    item = { type: 'pdf', data: dataUrl };
+                } else {
+                    item = { type: 'image', data: await compressImage(dataUrl) };
+                }
+                item.createdAt = Date.now() + ok;
+                await setDoc(doc(collection(db, "Accommodations", `stay_${index}`, "photos")), item);
+                ok++;
+            } catch (err) {
+                console.error("上傳失敗:", err);
+                alert("檔案上傳失敗：" + (err.code || err.message));
+            }
+        }
+        const statusEl = document.getElementById(`save-status-${index}`);
+        if (statusEl && ok) {
+            statusEl.innerText = `✓ ${ok} 個檔案已上傳雲端`;
+            statusEl.style.opacity = 1;
+            setTimeout(() => { statusEl.style.opacity = 0; }, 2000);
+        }
+        event.target.value = '';
+    };
+
+    window.renderPhotos = function(index, photos) {
+        if(!Array.isArray(photos)) return;
+        const previewContainer = document.getElementById(`photo-preview-container-${index}`);
+        if(!previewContainer) return;
+        previewContainer.innerHTML = ''; 
+        photos.forEach((photo, photoIndex) => {
+            const itemDiv = document.createElement('div');
+            itemDiv.className = 'photo-item';
+            const btn = document.createElement('button');
+            btn.className = 'btn-remove-photo'; btn.innerHTML = '✕';
+            btn.onclick = () => window.removePhoto(index, photo.id);
+            itemDiv.appendChild(btn);
+            
+            if (photo.type === 'pdf') {
+                const iframe = document.createElement('iframe');
+                iframe.src = photo.data; itemDiv.appendChild(iframe);
+            } else {
+                const img = document.createElement('img');
+                img.src = photo.data; itemDiv.appendChild(img);
+            }
+            previewContainer.appendChild(itemDiv);
+        });
+    };
+
+    window.removePhoto = async function(index, photoId) {
+        if (!confirm("確定要刪除這份憑證/收據嗎？（所有裝置都會一併刪除）")) return;
+        try {
+            await deleteDoc(doc(db, "Accommodations", `stay_${index}`, "photos", photoId));
+        } catch (e) {
+            alert("刪除失敗：" + (e.code || e.message));
+        }
+    };
+
+    function getDeviceId() {
+        try {
+            let id = localStorage.getItem('deviceId');
+            if (!id) { id = Math.random().toString(36).slice(2, 8); localStorage.setItem('deviceId', id); }
+            return id;
+        } catch (e) { return 'x' + Math.random().toString(36).slice(2, 6); }
+    }
+    async function migrateLocalPhotos() {
+        const dev = getDeviceId();
+        for (let i = 0; i < stays.length; i++) {
+            try {
+                const local = await getPhotosFromDB(i);
+                if (!local || !local.length) continue;
+                let allOk = true;
+                for (let j = 0; j < local.length; j++) {
+                    const p = local[j];
+                    if (!p || !p.data || p.data.length > MAX_DOC_CHARS) { allOk = false; continue; }
+                    await setDoc(doc(db, "Accommodations", `stay_${i}`, "photos", `local_${dev}_${j}`),
+                        { type: p.type, data: p.data, createdAt: j });
+                }
+                if (allOk) await savePhotosToDB(i, []);
+            } catch (e) { console.warn("搬移本機照片失敗:", e); }
+        }
+    }
+
+    function applyStayData(index, data) {
+        const setVal = (id, v) => {
+            const el = document.getElementById(id);
+            if (el && typeof v === 'string' && document.activeElement !== el && el.value !== v) el.value = v;
+        };
+        setVal(`ref-${index}`, data.ref);
+        setVal(`breakfast-${index}`, data.breakfast);
+        if (!NOTE_LOCAL) setVal(`note-${index}`, data.note);
+        setVal(`room-${index}`, data.room);
+        if (data.payment) {
+            setVal(`pay-status-${index}`, data.payment.status);
+            paymentStatusCache[index] = data.payment.status;
+            paymentPayerCache[index] = data.payment.payer;
+            refreshHomeSummary();
+            setVal(`pay-date-${index}`, data.payment.date);
+            fillPayment(index, data.payment);
+        }
+    }
+    function startRealtimeSync() {
+        if (isAdmin) migrateLocalPhotos();
+        const onErr = (e) => { syncError = `同步失敗：${e.code || e.message}`; updateGlobalSyncTime(); };
+        stays.forEach((_, index) => {
+            onSnapshot(doc(db, "Accommodations", `stay_${index}`), snap => {
+                if (snap.exists()) applyStayData(index, snap.data());
+                if (!snap.metadata.fromCache) { syncError = null; updateGlobalSyncTime(); }
+            }, onErr);
+            onSnapshot(collection(db, "Accommodations", `stay_${index}`, "photos"), snap => {
+                const photos = snap.docs.map(d => ({ id: d.id, ...d.data() }))
+                    .sort((a, b) => (a.createdAt || 0) - (b.createdAt || 0));
+                window.renderPhotos(index, photos);
+            }, onErr);
+        });
+    }
+
+    function getWeatherDesc(code) {
+        if (code === 0) return "☀️ 晴朗無雲";
+        if (code <= 3) return "⛅ 晴時多雲";
+        if (code === 45 || code === 48) return "🌫 起霧";
+        if (code >= 51 && code <= 67) return "🌧 陣雨 / 降雨";
+        if (code >= 71 && code <= 77) return "❄️ 降雪";
+        if (code >= 80 && code <= 82) return "🌦 陣雨";
+        if (code >= 85 && code <= 86) return "🌨 陣雪";
+        if (code >= 95) return "⛈ 雷陣雨";
+        return "🌥 陰天";
+    }
+
+    async function fetchWeather(stayIndex) {
+        const weatherBox = document.getElementById(`weather-${stayIndex}`);
+        if (!weatherBox || weatherBox.dataset.loaded === "true") return;
+
+        const stay = stays[stayIndex];
+        try {
+            const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${stay.lat}&longitude=${stay.lon}&current_weather=true`);
+            const data = await res.json();
+            const temp = data.current_weather.temperature;
+            const code = data.current_weather.weathercode;
+            
+            weatherBox.innerHTML = `
+                <div><strong>🌡️ 即時氣溫：</strong> ${temp}°C</div>
+                <div><strong>🌤 當前天氣：</strong> ${getWeatherDesc(code)}</div>
+            `;
+            weatherBox.dataset.loaded = "true";
+        } catch (error) {
+            weatherBox.innerHTML = `<div class="weather-loading" style="color:#64748B;">即時天氣無法載入</div>`;
+        }
+    }
+
+    const paymentStatusCache = {};
+    const paymentPayerCache = {};
+    function refreshHomeSummary() {
+        const el = document.getElementById('home-summary-list');
+        if (!el) return;
+        el.innerHTML = stays.map((s, i) => {
+            const paid = paymentStatusCache[i] === '已付款';
+            const payer = paymentPayerCache[i];
+            const paidNote = paid ? `（已付款${payer ? ' by ' + payer : ''}）` : '';
+            return `
+                <div class="info-row horizontal">
+                    <span class="info-label" style="min-width: 90px; color:#3B82F6; font-weight:bold;">${s.date.split(' ')[0]}</span>
+                    <span class="info-value-static" style="text-align: left; max-width: 100%; ${paid ? 'text-decoration: line-through; color: #94A3B8;' : ''}">
+                        ${s.hotel}${paid ? ` <span style="text-decoration:none; color:#059669; font-weight:600; font-size:0.85em;">${paidNote}</span>` : ''}
+                    </span>
+                </div>`;
+        }).join('');
+    }
+
+    // 重新修改這段，直接使用原始資料裡的日期與地點名稱
+    function renderPageSelect() {
+        const select = document.getElementById('page-select');
+        if (!select) return;
+        
+        let options = `<option value="0">🗺️ 總覽</option>`;
+        stays.forEach((stay, index) => {
+            // 直接帶入完整的 stay.date，例如： "10/13 - 10/15 (奧斯陸)"
+            options += `<option value="${index + 1}">${stay.date}</option>`;
+        });
+        select.innerHTML = options;
+    }
+
+    window.goToPage = function(pageId) {
+        if (currentPage !== pageId) {
+            document.getElementById(`page-${currentPage}`).classList.remove('active');
+            currentPage = pageId;
+            document.getElementById(`page-${currentPage}`).classList.add('active');
+            updateButtons();
+        }
+    };
+
+    async function renderBook() {
+        let html = `
+            <div class="page active" id="page-0">
+                <div class="info-card" id="global-sync-card" style="background: #ECFDF5; border: 1px solid #A7F3D0; display: flex; align-items: center; justify-content: space-between; padding: 12px 16px;">
+                    <div style="display: flex; align-items: center; gap: 12px;">
+                        <div style="background: #10B981; color: white; width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.1em;">
+                            ☁️️
+                        </div>
+                        <div>
+                            <div style="font-weight: bold; color: #065F46; font-size: 1.05em;">雲端資料已備份</div>
+                            <div id="global-sync-time" style="font-size: 0.85em; color: #047857; margin-top: 2px;">連線資料庫中...</div>
+                        </div>
+                    </div>
+                    <div style="width: 10px; height: 10px; background: #10B981; border-radius: 50%; box-shadow: 0 0 8px #10B981; animation: pulse 2s infinite;"></div>
+                </div>
+
+                <h2 class="hotel-name">🗺️ 北歐跨國住宿與路線總覽</h2>
+                <div class="map-container" style="height: 320px;">
+                    <iframe src="https://maps.google.com/maps?saddr=Oslo,Norway&daddr=Sørvågen,Norway+to:Ballstad,Norway+to:Tromsø,Norway+to:Rovaniemi,Finland+to:Helsinki,Finland+to:Munich,Germany&output=embed" loading="lazy"></iframe>
+                </div>
+
+                <div id="upcoming-deadlines-container"></div>
+
+                <div class="info-card">
+                    <h3 style="margin-top:0; margin-bottom:15px; color:#1E293B; font-size:1.1em;">📅 住宿行程總表</h3>
+                    <div id="home-summary-list"></div>
+                </div>
+            </div>
+        `;
+
+        stays.forEach((item, index) => {
+            let pageId = index + 1;
+            html += `
+                <div class="page" id="page-${pageId}">
+                    <div class="type-badge">📍 ${item.date}</div>
+                    <h2 class="hotel-name">${item.hotel}</h2>
+                    <div class="info-card">
+                        <div class="info-row horizontal"><span class="info-label">地址</span><span class="info-value-static">${item.address}</span></div>
+                        <div class="info-row horizontal"><span class="info-label">聯絡電話</span><span class="info-value-static">${item.phone}</span></div>
+                        <div class="info-row horizontal"><span class="info-label">Check-in</span><span class="info-value-static">${item.checkIn}</span></div>
+                        <div class="info-row horizontal"><span class="info-label">Check-out</span><span class="info-value-static">${item.checkOut}</span></div>
+                        <div class="info-row horizontal"><span class="info-label">🍳 早餐</span>
+                            <select class="payment-input" id="breakfast-${index}" style="max-width: 50%; flex: 0 1 auto;" onchange="saveData(${index}, 'breakfast', this.value)">
+                                <option value="">請選擇</option>
+                                <option value="有">✅ 有</option>
+                                <option value="無">❌ 無</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="info-card">
+                        <div class="info-row">
+                            <span class="info-label">✏️ 訂單編號 / 確認碼 / PIN碼</span>
+                            <textarea class="editable-field" id="ref-${index}" oninput="saveData(${index}, 'ref', this.value)" placeholder="請輸入訂房確認碼...">${item.bookingRef}</textarea>
+                        </div>
+                        <div class="info-row" style="border-bottom: none; padding-bottom: 0;">
+                            <span class="info-label">✏️ 房型 / 床位分配</span>
+                            <textarea class="editable-field" id="room-${index}" oninput="saveData(${index}, 'room', this.value)" placeholder="請輸入房型與床位資訊...">${item.room}</textarea>
+                        </div>
+                    </div>
+                    
+                    <div class="payment-section">
+                        <h3 style="margin: 0 0 15px 0; font-size: 1.05em; color: #0F172A;">💰 付款紀錄</h3>
+                        <div class="payment-row">
+                            <span class="info-label" style="width: 70px;">付款狀態</span>
+                            <select class="payment-input" id="pay-status-${index}" onchange="savePayment(${index})">
+                                <option value="">選擇狀態</option>
+                                <option value="已付款">✅ 已付款</option>
+                                <option value="未付款">⏳ 尚未付款</option>
+                                <option value="現場付">🏨 現場結帳</option>
+                            </select>
+                        </div>
+                        <div class="payment-row">
+                            <span class="info-label" style="width: 70px;">付款日期</span>
+                            <input type="date" class="payment-input" id="pay-date-${index}" onchange="savePayment(${index})">
+                        </div>
+                        <div class="payment-row">
+                            <span class="info-label" style="width: 70px;">付款金額</span>
+                            <div style="display:flex; gap:8px; flex:1;">
+                                <select class="payment-input" id="pay-currency-${index}" style="flex:0 0 42%; text-align:left;" onchange="savePayment(${index})">
+                                    <option value="">貨幣</option>
+                                    ${CURRENCIES.map(c => `<option value="${c.code}">${c.code}${c.name}</option>`).join('')}
+                                </select>
+                                <input type="number" inputmode="decimal" min="0" step="any" class="payment-input" id="pay-amount-${index}" oninput="savePayment(${index})" placeholder="輸入金額" style="min-width:0;">
+                            </div>
+                        </div>
+                        <div class="payment-row">
+                            <span class="info-label" style="width: 70px;">付款人</span>
+                            <select class="payment-input" id="pay-payer-${index}" onchange="savePayment(${index})">
+                                <option value="">選擇成員</option>
+                                ${PAY_MEMBERS.map(m => `<option value="${m}">${m}</option>`).join('')}
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="photo-section">
+                        <h3 style="margin: 0 0 10px 0; font-size: 1.05em; color: #0F172A;">📸 住宿憑證與收據存檔</h3>
+                        <input type="file" id="file-upload-${index}" accept="image/*,application/pdf" multiple style="display:none;" onchange="handlePhotoUpload(event, ${index})">
+                        <button class="btn-camera" onclick="document.getElementById('file-upload-${index}').click()">
+                            ➕ 點此選擇照片、文件或拍照
+                        </button>
+                        <div class="photo-preview-container" id="photo-preview-container-${index}"></div>
+                    </div>
+
+                    <div class="climate-section" id="weather-${index}">
+                        <div class="weather-loading">🔄 正在連線取得即時天氣...</div>
+                    </div>
+
+                    <div class="notes-section"><strong>⚠️ 系統原始備註：</strong><br>${item.notes.replace(/\n/g, '<br>')}</div>
+
+                    <div class="user-input-section">
+                        <div style="font-weight: 600; color: #64748B; margin-bottom: 8px;">✏️ 個人補充事項 ${NOTE_LOCAL ? '<span style="font-weight:400;font-size:0.85em;">（只存在這台裝置，不會上傳）</span>' : ''}</div>
+                        <textarea id="note-${index}" oninput="saveData(${index}, 'note', this.value)" placeholder="點此輸入您的住宿備忘錄..."></textarea>
+                        <span class="save-status" id="save-status-${index}"></span>
+                    </div>
+
+                    <a href="${item.webUrl}" target="_blank" class="btn-web" rel="noopener noreferrer">🌐 前往飯店網頁 / 搜尋資訊</a>
+
+                    <div class="map-container">
+                        <iframe src="https://maps.google.com/maps?q=${item.mapQuery}&t=&z=14&ie=UTF8&iwloc=&output=embed" loading="lazy"></iframe>
+                    </div>
+                </div>
+            `;
+        });
+        
+        container.innerHTML = html;
+        refreshHomeSummary();
+
+        if (!isAdmin) {
+            document.body.classList.add('readonly-mode');
+            stays.forEach((_, i) => {
+                ['ref', 'room'].forEach(k => { const el = document.getElementById(`${k}-${i}`); if (el) el.readOnly = true; });
+                ['pay-status', 'pay-date', 'pay-currency', 'pay-amount', 'pay-payer', 'breakfast'].forEach(k => { const el = document.getElementById(`${k}-${i}`); if (el) el.disabled = true; });
+            });
+        }
+
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const oneWeekLater = new Date(today);
+        oneWeekLater.setDate(today.getDate() + 7);
+        let upcomingDeadlines = [];
+
+        for (let index = 0; index < stays.length; index++) {
+            let paymentData = { status: "", date: "", amount: "" };
+
+            try {
+                const docSnap = await getDoc(doc(db, "Accommodations", `stay_${index}`));
+                if (docSnap.exists()) {
+                    const data = docSnap.data();
+                    if(data.ref) document.getElementById(`ref-${index}`).value = data.ref;
+                    if(data.room) document.getElementById(`room-${index}`).value = data.room;
+                    if(data.breakfast) document.getElementById(`breakfast-${index}`).value = data.breakfast;
+                    if(!NOTE_LOCAL && data.note) document.getElementById(`note-${index}`).value = data.note;
+                    if (NOTE_LOCAL && isAdmin && data.note && loadLocalNote(index) === null) saveLocalNote(index, data.note);
+                    
+                    if(data.payment) {
+                        paymentData = data.payment;
+                        if(paymentData.status) document.getElementById(`pay-status-${index}`).value = paymentData.status;
+                        paymentStatusCache[index] = paymentData.status;
+                        paymentPayerCache[index] = paymentData.payer;
+                        if(paymentData.date) document.getElementById(`pay-date-${index}`).value = paymentData.date;
+                        fillPayment(index, paymentData);
+                    }
+                }
+            } catch(e) {
+                console.error("載入 Firebase 資料失敗:", e);
+                syncError = `讀取雲端失敗：${e.code || e.message}`;
+            }
+
+            const localNote = NOTE_LOCAL ? loadLocalNote(index) : null;
+            if (localNote !== null) document.getElementById(`note-${index}`).value = localNote;
+
+            const stay = stays[index];
+            if (stay.paymentDeadline) {
+                const [y, m, d] = stay.paymentDeadline.split('-');
+                const deadlineDate = new Date(y, m - 1, d);
+
+                if (today > deadlineDate) {
+                    if (paymentData.status !== "已付款") {
+                        paymentData.status = "已付款";
+                        if (!paymentData.date) paymentData.date = stay.paymentDeadline;
+                        
+                        document.getElementById(`pay-status-${index}`).value = "已付款";
+                        document.getElementById(`pay-date-${index}`).value = paymentData.date;
+                        
+                        writeToFirebase(index, "payment", paymentData);
+                    }
+                } 
+                else if (deadlineDate <= oneWeekLater) {
+                    if (paymentData.status !== "已付款") {
+                        upcomingDeadlines.push({
+                            hotel: stay.hotel,
+                            date: stay.paymentDeadline,
+                            note: stay.deadlineNote
+                        });
+                    }
+                }
+            }
+        }
+
+        refreshHomeSummary();
+        updateGlobalSyncTime();
+        startRealtimeSync();
+
+        const deadlineContainer = document.getElementById('upcoming-deadlines-container');
+        if (deadlineContainer && upcomingDeadlines.length > 0) {
+            deadlineContainer.innerHTML = `
+                <div class="info-card" style="border-left: 4px solid #F59E0B; background: #FFFBEB;">
+                    <h3 style="margin-top:0; margin-bottom:12px; color:#B45309; font-size:1.1em;">⚠️ 即將到來的付款與取消期限 (7天內)</h3>
+                    ${upcomingDeadlines.map((d, i) => `
+                        <div style="margin-bottom: ${i === upcomingDeadlines.length - 1 ? '0' : '8px'}; font-size: 0.95em; padding-bottom: ${i === upcomingDeadlines.length - 1 ? '0' : '8px'}; border-bottom:${i === upcomingDeadlines.length - 1 ? 'none' : '1px dashed #FCD34D'};">
+                            <strong style="color: #D97706;">${d.date}</strong> - <strong>${d.hotel}</strong><br>
+                            <span style="color: #92400E; font-size: 0.9em;">${d.note}</span>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        }
+        
+        renderPageSelect(); // 初始化下拉選單
+        updateButtons();
+    }
+
+    function updateButtons() {
+        document.getElementById('btn-prev').disabled = currentPage === 0;
+        document.getElementById('btn-next').disabled = currentPage === totalPages - 1;
+        
+        // 同步下拉選單的選項
+        const pageSelect = document.getElementById('page-select');
+        if (pageSelect) pageSelect.value = currentPage;
+
+        document.getElementById('accom-book').scrollTop = 0; 
+
+        if (currentPage > 0) {
+            fetchWeather(currentPage - 1);
+        }
+    }
+
+    window.nextPage = function() {
+        if (currentPage < totalPages - 1) {
+            document.getElementById(`page-${currentPage}`).classList.remove('active');
+            currentPage++;
+            document.getElementById(`page-${currentPage}`).classList.add('active');
+            updateButtons();
+        }
+    };
+
+    window.prevPage = function() {
+        if (currentPage > 0) {
+            document.getElementById(`page-${currentPage}`).classList.remove('active');
+            currentPage--;
+            document.getElementById(`page-${currentPage}`).classList.add('active');
+            updateButtons();
+        }
+    };
+
+    window.handlePrint = function() {
+        if (currentPage === 0) document.body.classList.add('print-all');
+        else document.body.classList.remove('print-all');
+        setTimeout(() => { window.print(); }, 100);
+    };
+
+    // ===== 登入驗證 =====
+    const loginMsg = (t, ok) => { const el = document.getElementById('login-msg'); el.innerText = t; el.className = ok ? 'ok' : ''; };
+    const authErr = (e) => ({
+        'auth/invalid-credential': 'Email 或密碼錯誤',
+        'auth/wrong-password': 'Email 或密碼錯誤',
+        'auth/user-not-found': 'Email 或密碼錯誤',
+        'auth/invalid-email': 'Email 格式不正確',
+        'auth/too-many-requests': '嘗試次數過多，請稍後再試',
+        'auth/network-request-failed': '網路連線失敗',
+        'auth/email-already-in-use': '此 Email 已註冊',
+        'auth/weak-password': '密碼至少需要 6 個字元',
+        'auth/operation-not-allowed': '尚未在 Firebase 啟用 Email/密碼登入'
+    }[e.code] || `錯誤：${e.code || e.message}`);
+
+    window.doLogin = async function(ev) {
+        ev.preventDefault();
+        const btn = document.getElementById('login-btn');
+        btn.disabled = true; loginMsg('登入中...', true);
+        try {
+            await signInWithEmailAndPassword(auth,
+                document.getElementById('login-email').value.trim(),
+                document.getElementById('login-password').value);
+            loginMsg('');
+        } catch (e) { loginMsg(authErr(e)); }
+        btn.disabled = false;
+    };
+    let signingUp = false;
+    window.doSignup = async function() {
+        const email = document.getElementById('login-email').value.trim();
+        const pw = document.getElementById('login-password').value;
+        if (!email || !pw) return loginMsg('請先輸入 Email 與密碼（密碼至少 6 個字元）');
+        signingUp = true; loginMsg('註冊中...', true);
+        try {
+            const cred = await createUserWithEmailAndPassword(auth, email, pw);
+            await sendEmailVerification(cred.user);
+            await signOut(auth);
+            loginMsg('註冊成功！驗證信已寄出，請點信中連結完成驗證後，再回來登入', true);
+        } catch (e) { loginMsg(authErr(e)); }
+        signingUp = false;
+    };
+    window.doResetPassword = async function() {
+        const email = document.getElementById('login-email').value.trim();
+        if (!email) return loginMsg('請先在上方輸入 Email');
+        try { await sendPasswordResetEmail(auth, email); loginMsg('重設密碼信已寄出，請查看信箱', true); }
+        catch (e) { loginMsg(authErr(e)); }
+    };
+    window.doLogout = async function() { await signOut(auth); };
+
+    document.getElementById('signup-btn').style.display = ALLOW_SIGNUP ? 'inline-block' : 'none';
+
+    let appStarted = false;
+    if (!REQUIRE_LOGIN) {
+        document.getElementById('login-overlay').remove();
+        const lb = document.getElementById('btn-logout'); if (lb) lb.remove();
+        appStarted = true;
+        renderBook();
+    } else onAuthStateChanged(auth, async (user) => {
+        const overlay = document.getElementById('login-overlay');
+        const logoutBtn = document.getElementById('btn-logout');
+        if (signingUp) return;
+        if (user && !user.emailVerified) {
+            sendEmailVerification(user).catch(() => {});
+            signOut(auth).then(() => loginMsg('此 Email 尚未驗證，已重新寄出驗證信，請點信中連結後再登入'));
+            return;
+        }
+        if (user) {
+            if (appStarted) return;
+            appStarted = true;
+            currentEmail = (user.email || '').toLowerCase();
+            try {
+                const snap = await getDoc(doc(db, "allowedUsers", currentEmail));
+                if (!snap.exists()) throw { code: 'not-listed' };
+                isAdmin = snap.data().role === 'admin';
+            } catch (e) {
+                appStarted = false;
+                await signOut(auth);
+                loginMsg(`此帳號尚未被授權，請聯絡管理員加入名單（${e.code || e.message}）`);
+                return;
+            }
+            overlay.style.display = 'none';
+            logoutBtn.innerText = (isAdmin ? '管理者' : '唯讀') + '・登出';
+            logoutBtn.style.display = 'block';
+            renderBook();
+        } else {
+            if (appStarted) { location.reload(); return; }
+            logoutBtn.style.display = 'none';
+            overlay.style.display = 'flex';
+        }
+    });
+</script>
+</body>
+</html>
