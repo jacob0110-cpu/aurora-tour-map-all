@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <!-- viewport-fit=cover：讓手機瀏海/圓角機型也能滿版顯示 -->
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>極光之徑｜行程主控台</title>
+<title>2026 北歐極光行程</title>
 <style>
   /* ========== 1. 色彩變數：深色為預設，亦提供極簡白底 ========== */
   :root {
@@ -41,7 +41,7 @@
     background: var(--bar); border-bottom: 1px solid var(--line);
   }
   .brand, nav, .tools { min-height: var(--bar-h); align-items: center; }
-  .brand { display: flex; font-size: 16px; font-weight: 700; letter-spacing: .04em; white-space: nowrap; }
+  .brand { display: flex; font-size: 32px; line-height: 1.2; font-weight: 700; letter-spacing: .04em; white-space: nowrap; }
 
   /* 頁籤：容器可橫向捲動，手機上不會換行或擠壓 */
   nav { flex: 1; min-width: 0; display: flex; gap: 4px; overflow-x: auto; scrollbar-width: none; }
@@ -108,7 +108,7 @@
   /* ========== 5. 響應式：手機改為兩列（標題在上、頁籤在下） ========== */
   @media (max-width: 640px) {
     header { gap: 0 8px; padding: 0 12px; }
-    .brand { font-size: 15px; flex: 1; }
+    .brand { font-size: 26px; letter-spacing: 0; flex: 1; min-width: 0; }
     .brand, .tools { min-height: 44px; }
     .tools { order: 2; }
     .info { order: 3; margin-top: 0; padding-bottom: 4px; gap: 2px 12px; }
@@ -120,7 +120,7 @@
 <body>
 
 <header>
-  <div class="brand">極光之徑 行程主控台</div>
+  <div class="brand">2026 北歐極光行程</div>
   <nav id="tabs" role="tablist" aria-label="行程頁面"></nav>
   <div class="tools">
     <button id="reload" title="重新載入目前頁面" aria-label="重新載入">⟳</button>
