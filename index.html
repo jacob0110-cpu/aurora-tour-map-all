@@ -132,7 +132,7 @@
 
 <main id="stage">
   <div class="loading" id="loading">載入中…</div>
-  <div class="slow" id="slow" role="status">此頁載入較久或沒有顯示？<a id="slowLink" target="_blank" rel="noopener">在新分頁開啟</a></div>
+  <div class="slow" id="slow" role="status"><span id="slowMsg">此頁載入較久或沒有顯示？</span><a id="slowLink" target="_blank" rel="noopener">在新分頁開啟</a></div>
 </main>
 
 <script>
@@ -147,7 +147,8 @@
     { id: 'hel',   title: '赫爾辛基',   src: 'hel.html' },
     { id: 'guide', title: '旅遊指南',   src: 'guide.html' },
     { id: 'hotel', title: '住宿手冊',   src: 'hotel.html' },
-    { id: 'tran',  title: '交通手冊',   src: 'tran.html' }
+    { id: 'tran',  title: '交通手冊',   src: 'tran.html' },
+    { id: 'food',  title: '羅弗敦美食', src: 'lofoten-food.html' }
   ];
 
   const tabsEl = document.getElementById('tabs');
@@ -156,14 +157,36 @@
   const popout = document.getElementById('popout');
   const slow = document.getElementById('slow');
   const slowLink = document.getElementById('slowLink');
+  const slowMsg = document.getElementById('slowMsg');
   let slowTimer = null;
   /* 開始載入時計時，8 秒內沒收到 load 事件就顯示備援提示 */
   function watch(f) {
     clearTimeout(slowTimer); slow.classList.remove('show');
+    slowMsg.textContent = '此頁載入較久或沒有顯示？'; slowLink.style.display = '';
     slowLink.href = f.dataset.src;
     slowTimer = setTimeout(() => slow.classList.add('show'), 8000);
+    probe(f);
   }
-  function done() { clearTimeout(slowTimer); slow.classList.remove('show'); }
+  /* 檔案檢查：子網頁不存在時，明確告知是哪個檔案。
+     本機（file://）用 script 載入失敗偵測；網站空間用 HEAD 請求。 */
+  function missing(f) {
+    clearTimeout(slowTimer);
+    slowMsg.textContent = '找不到「' + decodeURI(f.dataset.src) + '」，請確認它與 index.html 放在同一個資料夾，且檔名（含大小寫）完全一致。';
+    slowLink.style.display = 'none';
+    slow.classList.add('show');
+    loading.classList.add('hide');
+  }
+  function probe(f) {
+    if (location.protocol === 'file:') {
+      const sc = document.createElement('script');
+      sc.onload = () => sc.remove();
+      sc.onerror = () => { sc.remove(); if (frames[current] === f) missing(f); };
+      sc.src = f.dataset.src; document.head.appendChild(sc);
+    } else {
+      fetch(f.dataset.src, { method: 'HEAD' }).then(r => { if (!r.ok && frames[current] === f) missing(f); }).catch(() => {});
+    }
+  }
+  function done() { clearTimeout(slowTimer); if (slowLink.style.display !== 'none') slow.classList.remove('show'); }
   const frames = {};   // id -> iframe
   const buttons = {};  // id -> 頁籤按鈕
   let current = null;
