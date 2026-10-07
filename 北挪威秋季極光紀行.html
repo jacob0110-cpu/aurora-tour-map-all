@@ -80,7 +80,8 @@ h1 { font-size: clamp(28px, 6vw, 42px); line-height: 1.3; margin: 8px 0 6px; let
 .btn-link:hover { background: #5bb6df; color: #000; }
 
 /* 底部時間軸與行程列表 */
-.day-divider { margin-top: 50px; padding-bottom: 12px; border-bottom: 2px solid var(--line); color: #fff; font-size: 24px; font-weight: bold; letter-spacing: 0.05em; }
+.day-block[hidden], .info[hidden] { display: none; }
+.day-divider { scroll-margin-top: 12px; margin-top: 50px; padding-bottom: 12px; border-bottom: 2px solid var(--line); color: #fff; font-size: 24px; font-weight: bold; letter-spacing: 0.05em; }
 section { margin-top: 32px; }
 h2 { font-size: 18px; margin: 0 0 24px; color: #fff; display: flex; align-items: center; gap: 10px; opacity: 0.9; }
 ol { list-style: none; margin: 0 0 0 12px; padding: 0; border-left: 2px solid var(--c); }
@@ -952,6 +953,7 @@ html { -webkit-text-size-adjust: 100%; }
 
     <!-- Lofoten 行程列表 -->
     <div class="transit-legend">🚗 開車　🚶 步行　🚌 公車　🚕 計程車　⛴ 渡輪　<span>各站之間的交通時間為估算值（含少量停車與上下車時間），10 月中旬路面可能濕滑，建議預留 10–20% 緩衝，出發前請以 Google Maps 即時資訊為準。</span></div>
+    <div class="day-block" data-day="4">
     <div class="day-divider">Day 4：10/15 (出發與跨海)</div>
     <section class="c-d1">
         <h2>✈️ 交通日：博多出發與跨海渡輪</h2>
@@ -1006,6 +1008,8 @@ html { -webkit-text-size-adjust: 100%; }
         </ol>
     </section>
 
+    </div><!-- /day-block -->
+    <div class="day-block" data-day="5">
     <div class="day-divider">Day 5：10/16 (南島精華)</div>
     <section class="c-d2-am">
         <h2>📸 白天：經典漁村巡禮與輕鬆打卡</h2>
@@ -1099,6 +1103,8 @@ html { -webkit-text-size-adjust: 100%; }
         </ol>
     </section>
 
+    </div><!-- /day-block -->
+    <div class="day-block" data-day="6">
     <div class="day-divider">Day 6：10/17 (海岸步道與採買)</div>
     <section class="c-d2-noon">
         <h2>🌊 白天：絕美海岸線與中島補給</h2>
@@ -1195,10 +1201,26 @@ html { -webkit-text-size-adjust: 100%; }
         </ol>
     </section>
 
+    </div><!-- /day-block -->
+    <div class="day-block" data-day="7">
     <div class="day-divider">Day 7：10/18 (中北島與登船)</div>
     <section class="c-d2-am">
         <h2>☕ 白天：北極威尼斯與還車</h2>
         <ol>
+            <li data-n="0" class="clickable-li" data-loc="LH2" data-scroll tabindex="0" role="button">
+                <div class="time-badge">08:00 出發（預估）</div>
+                <div class="item-title">從 Solsiden Brygge 飯店出發</div>
+                <div class="list-content-flex">
+                    <div class="list-text-wrap">
+                        <div class="item-desc">早餐、退房後驅車前往 Henningsvær。預留約 1.5 小時車程與緩衝，抵達時間約 09:30；冬季路面可能濕滑結冰，建議再多抓 10–15 分鐘。</div>
+                        <div class="item-native">Solsiden Brygge, Ballstad</div>
+                        <div class="item-links">
+                            <a href="https://www.google.com/maps/dir/?api=1&origin=Solsiden+Brygge,+Ballstad&destination=Henningsv%C3%A6r&travelmode=driving" target="_blank">📍 Google Maps 路線</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="transit"><div class="t-head"><span class="t-icon">🚗</span><span class="t-mode">開車</span><span class="t-time">約 1 小時 30 分 · 約 80 km（估算）</span></div><div class="t-next">下一站：羅弗敦威尼斯 (Henningsvær)</div><div class="t-note">經 E10 往東、再轉 Route 816 前往 Henningsvær；實際時間請以出發當天 Google Maps 為準</div></div>
+            </li>
             <li data-n="1" class="clickable-li" data-loc="L9" data-scroll tabindex="0" role="button">
                 <div class="time-badge">09:30 - 12:00</div>
                 <div class="item-title">羅弗敦威尼斯 (Henningsvær)</div>
@@ -1242,31 +1264,75 @@ html { -webkit-text-size-adjust: 100%; }
                 <div class="transit"><div class="t-head"><span class="t-icon">🚶</span><span class="t-mode">步行 / 短程開車</span><span class="t-time">約 5–10 分</span></div><div class="t-next">下一站：完成還車</div><div class="t-note">視還車地點而定，建議還車前先加滿油並拍照存證</div></div>
             </li>
             <li data-n="4" class="clickable-li" data-loc="L10" data-scroll tabindex="0" role="button">
-                <div class="time-badge">16:30</div>
-                <div class="item-title">完成還車</div>
+                <div class="time-badge">17:00 - 17:30</div>
+                <div class="item-title">還車與行李安置</div>
                 <div class="list-content-flex">
                     <div class="list-text-wrap">
-                        <div class="item-desc">17:00 租車處關門前完成還車手續，結束羅弗敦自駕。</div>
+                        <div class="item-desc">在市區或指定地點辦理還車手續，結束羅弗敦自駕（還車前建議先加滿油並拍照存證）。<br>💡 重要策略：拖著大行李在寒冷黑暗的街上走很不方便，還車後建議步行或搭計程車前往港口旁的 Thon Hotel Lofoten 或 Nordis Apartments。即使不是住客，也可禮貌詢問大廳櫃檯能否自費或協助暫存行李數小時；若不行，就在飯店大廳的極光景觀咖啡廳或酒吧點杯飲品，行李放身邊，同時免受寒風之苦。</div>
                     </div>
                 </div>
-                <div class="transit"><div class="t-head"><span class="t-icon">🚶</span><span class="t-mode">步行</span><span class="t-time">約 5–10 分</span></div><div class="t-next">下一站：登上跨夜渡輪</div><div class="t-note">從還車處走到 Svolvær 港口碼頭；行李可先寄放或一併拖行，距登船還有較長空檔</div></div>
+                <div class="transit"><div class="t-head"><span class="t-icon">🚶</span><span class="t-mode">步行 / 計程車</span><span class="t-time">視還車地點而定</span></div><div class="t-next">下一站：港景晚餐</div><div class="t-note">行李安置好後，再前往下方三間餐廳擇一用餐</div></div>
+            </li>
+            <li data-n="5" class="clickable-li" data-loc="LF2" data-scroll tabindex="0" role="button">
+                <div class="time-badge">17:30 - 19:30</div>
+                <div class="item-title">享用豐盛的港景晚餐（建議提早訂位）</div>
+                <div class="list-content-flex">
+                    <div class="list-text-wrap">
+                        <div class="item-desc"><b>① Børsen Spiseri</b>（步行約 15 分鐘）：天氣允許可跨橋到老木屋區漫步。10 月通常有季節限定 Chef's choice 三道式秋季料理（約 695 挪威克朗），招牌魚湯以大比目魚高湯熬製，很適合暖胃。</div>
+                        <div class="item-native">Børsen Spiseri</div>
+                        <div class="item-links">
+                            <a href="https://www.google.com/maps/search/?api=1&query=B%C3%B8rsen+Spiseri,+Svolv%C3%A6r" target="_blank">📍 Børsen Spiseri</a>
+                        </div>
+                        <div class="item-desc"><b>② Paleo Arctic</b>（位於 Thon Hotel 內）：就在港口邊，有優雅的現場鋼琴演奏，窗外直接面向海港，可一邊享用在地傳統鱈魚乾（Stockfish）或羅弗敦羔羊肉，一邊溫暖地等待。</div>
+                        <div class="item-native">Paleo Arctic · Thon Hotel Lofoten</div>
+                        <div class="item-links">
+                            <a href="https://www.google.com/maps/search/?api=1&query=Paleo+Arctic,+Thon+Hotel+Lofoten,+Svolv%C3%A6r" target="_blank">📍 Paleo Arctic</a>
+                        </div>
+                        <div class="item-desc"><b>③ Nordis Restaurant</b>：位於廣場與碼頭旁，出菜速度以挪威標準算相當快（約 10–15 分鐘），提供海鮮義大利麵、現烤義式披薩與漢堡，氣氛現代時髦。</div>
+                        <div class="item-native">Nordis Restaurant</div>
+                        <div class="item-links">
+                            <a href="https://www.google.com/maps/search/?api=1&query=Nordis+Restaurant,+Svolv%C3%A6r" target="_blank">📍 Nordis Restaurant</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="transit"><div class="t-head"><span class="t-icon">🚶</span><span class="t-mode">步行</span><span class="t-time">約 5–15 分</span></div><div class="t-next">下一站：前往碼頭與準備登船</div><div class="t-note">餐後回飯店取回行李，再步行前往 Svolvær 港口碼頭</div></div>
             </li>
         </ol>
     </section>
     <section class="c-d1">
         <h2>🚢 夜晚：跨夜北行</h2>
         <ol>
-            <li data-n="5" class="clickable-li" data-loc="L10" data-scroll tabindex="0" role="button">
-                <div class="time-badge">22:15</div>
-                <div class="item-title">登上跨夜渡輪</div>
+            <li data-n="6" class="clickable-li" data-loc="LP" data-scroll tabindex="0" role="button">
+                <div class="time-badge">21:00 - 21:30</div>
+                <div class="item-title">前往碼頭與準備登船</div>
                 <div class="list-content-flex">
                     <div class="list-text-wrap">
-                        <div class="item-desc">登上 Havila Polaris 渡輪出發，入住預訂好的內側艙房，一路航向特羅姆瑟。</div>
+                        <div class="item-desc">提早拿回行李，步行前往 Svolvær Port terminal 碼頭。Havila 郵輪通常會在 21:00–21:15 左右駛入港口，在溫暖的候船室看著巨大的郵輪破浪進港，是非常震撼的畫面。</div>
+                        <div class="item-native">Svolvær Port terminal</div>
+                        <div class="item-links">
+                            <a href="https://www.google.com/maps/search/?api=1&query=Svolv%C3%A6r+Port+terminal" target="_blank">📍 Google Maps</a>
+                        </div>
+                        <div class="item-desc">🛰 Havila Polaris 即時 GPS 船位追蹤（AIS，IMO 9946910）：出發前可確認郵輪是否準點，約 21:00–21:15 進港。</div>
+                        <div class="item-links">
+                            <a href="https://www.cruisemapper.com/ships/Havila-Polaris-ferry-2175" target="_blank" rel="noopener">🛰 CruiseMapper 船位</a>
+                            <a href="https://www.marinetraffic.com/en/ais/details/ships/imo:9946910" target="_blank" rel="noopener">🛰 MarineTraffic</a>
+                            <a href="https://www.vesselfinder.com/vessels/details/9946910" target="_blank" rel="noopener">🛰 VesselFinder</a>
+                        </div>
+                    </div>
+                </div>
+            </li>
+            <li data-n="7" class="clickable-li" data-loc="LP" data-scroll tabindex="0" role="button">
+                <div class="time-badge">21:30 - 22:00</div>
+                <div class="item-title">辦理登船（Check-in）· 22:00 啟航</div>
+                <div class="list-content-flex">
+                    <div class="list-text-wrap">
+                        <div class="item-desc">登上 Havila Polaris 並辦理手續，入住預訂好的內側艙房，準時於 22:00 啟航，展開北極圈航線之旅，一路航向特羅姆瑟。</div>
                     </div>
                 </div>
             </li>
         </ol>
     </section>
+    </div><!-- /day-block -->
 </div>
 
 <!-- ==============================================
@@ -1305,6 +1371,7 @@ html { -webkit-text-size-adjust: 100%; }
 
     <!-- Tromso 行程列表 -->
     <div class="transit-legend">🚗 開車　🚶 步行　🚌 公車　🚕 計程車　⛴ 渡輪　<span>各站之間的交通時間為估算值（含少量停車與上下車時間），10 月中旬路面可能濕滑，建議預留 10–20% 緩衝，出發前請以 Google Maps 即時資訊為準。</span></div>
+    <div class="day-block" data-day="8">
     <div class="day-divider">Day 8：10/19 (峽灣與夜景)</div>
     <section class="c-d1">
         <h2>🚠 下午：跨海峽灣風光與高空全景</h2>
@@ -1367,6 +1434,8 @@ html { -webkit-text-size-adjust: 100%; }
         </ol>
     </section>
 
+    </div><!-- /day-block -->
+    <div class="day-block" data-day="9">
     <div class="day-divider">Day 9：10/20 (市區深度遊)</div>
     <section class="c-d2-am">
         <h2>🌅 上午：彩色木屋與幾何建築</h2>
@@ -1495,6 +1564,7 @@ html { -webkit-text-size-adjust: 100%; }
             </li>
         </ol>
     </section>
+    </div><!-- /day-block -->
 </div>
 
 </main>
@@ -1525,7 +1595,11 @@ const DATA = {
     'L8': { title: "🛒 Leknes 市區採買", desc: "羅弗敦中部的最大商業區。鎮上有大型連鎖超市，是採買零食、生鮮、伴手禮與公路旅行補給品的最佳地點。", img: "Lenknes.jpg", q: "Leknes, Norway" },
     'LH2': { title: "🏨 Solsiden Brygge (住宿)", desc: "位於 Ballstad 的碼頭海景公寓。房間舒適且設計現代，晚餐可直接於公寓同棟的餐廳享用酥脆炸鱈魚或無菜單主廚全餐。", q: "Solsiden Brygge, Ballstad" },
     'L9': { title: "羅弗敦威尼斯 (Henningsvær)", desc: "由多個小島相連的水上小鎮，擁有絕佳的空拍地標「島嶼足球場」。鎮上充滿文藝氣息的咖啡館與藝術工坊值得一遊。", img: "Henningsvær.jpg", q: "Henningsvær", web: "https://lofoten.info/en/Henningsvaer" },
-    'L10': { title: "Svolvær 與 Svinøya", desc: "羅弗敦最大的城鎮，也是還車與搭乘跨海渡輪的樞紐。在此探訪 Svinøya 漁業島木棧道，尋找著名的「漁婦雕像」。", img: "Svinøya.jpeg", q: "Svinøya, Svolvær", web: "https://www.svinoya.no/" }
+    'L10': { title: "Svolvær 與 Svinøya", desc: "羅弗敦最大的城鎮，也是還車與搭乘跨海渡輪的樞紐。在此探訪 Svinøya 漁業島木棧道，尋找著名的「漁婦雕像」。", img: "Svinøya.jpeg", q: "Svinøya, Svolvær", web: "https://www.svinoya.no/" },
+    'LF2': { title: "🍽 Børsen Spiseri", desc: "Svinøya 老木屋區的人氣餐廳，10 月常推季節限定 Chef's choice 三道式秋季料理（約 695 NOK），招牌魚湯以大比目魚高湯熬製。", q: "Børsen Spiseri, Svolvær" },
+    'LF3': { title: "🍽 Paleo Arctic（Thon Hotel Lofoten）", desc: "位於港口邊的 Thon Hotel 內，有現場鋼琴演奏與海港景觀，可品嚐傳統鱈魚乾（Stockfish）或羅弗敦羔羊肉。也是還車後可詢問暫存行李的備選地點。", q: "Paleo Arctic, Thon Hotel Lofoten, Svolvær" },
+    'LF4': { title: "🍽 Nordis Restaurant", desc: "位於廣場與碼頭旁，出菜快（約 10–15 分鐘），提供海鮮義大利麵、現烤披薩與漢堡。Nordis Apartments 亦可詢問行李暫存。", q: "Nordis Restaurant, Svolvær" },
+    'LP': { title: "⚓ Svolvær 港口碼頭（Havila）", desc: "Havila 郵輪約 21:00–21:15 進港，21:30–22:00 辦理登船，22:00 啟航北上特羅姆瑟。", q: "Svolvær Port terminal" }
 },
   tromso: {
     'T0': { title: "⛴ Prostneset 郵輪碼頭", desc: "跨夜渡輪預計 14:15 抵達的碼頭，下船後前往住宿 Skaret by VANDER 入住。", q: "Prostneset, Tromsø" },
@@ -1563,6 +1637,7 @@ function showInfo(region, id, scroll = false) {
   const tab = $('tab-' + region);
   if (!loc || !tab) return;
   current[region] = id;
+  const box = $('info-box-' + region); box.hidden = false;
 
   tab.querySelectorAll('.pin').forEach(p => p.classList.toggle('active', p.dataset.loc === id));
   $('info-title-' + region).textContent = loc.title;
@@ -1586,6 +1661,7 @@ function showInfo(region, id, scroll = false) {
   views[region]?.reveal(PINS[region][id]);
   leafReveal(region, id);
   if (scroll) $('map-wrap-' + region).scrollIntoView({ behavior: 'smooth', block: 'center' });
+  else box.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 }
 
 function switchTab(tabId) {
@@ -1608,7 +1684,7 @@ document.addEventListener('keydown', e => {
   if ((e.key === 'Enter' || e.key === ' ') && e.target.matches('[data-loc]')) { e.preventDefault(); onActivate(e); }
 });
 
-const PINS = {"lofoten": {"L1": {"x": 800, "y": 430, "lb": "博多機場", "lx": 820, "ly": 430, "a": "start", "i": "✈️"}, "LH1": {"x": 170, "y": 360, "lb": "The Tide", "lx": 150, "ly": 340, "a": "end", "i": "🏨"}, "L2": {"x": 150, "y": 480, "lb": "Å 漁村", "lx": 150, "ly": 505, "a": "middle", "i": ""}, "L3": {"x": 210, "y": 440, "lb": "Olenilsøya", "lx": 210, "ly": 465, "a": "middle", "i": ""}, "LF1": {"x": 240, "y": 390, "lb": "Anita's Sjømat", "lx": 220, "ly": 380, "a": "end", "i": "🦐"}, "L4": {"x": 260, "y": 390, "lb": "Hamnøy 橋", "lx": 280, "ly": 390, "a": "start", "i": ""}, "L5": {"x": 340, "y": 390, "lb": "Nusfjord", "lx": 340, "ly": 415, "a": "middle", "i": ""}, "L6": {"x": 300, "y": 350, "lb": "Ramberg 沙灘", "lx": 280, "ly": 330, "a": "end", "i": ""}, "L7": {"x": 440, "y": 260, "lb": "Haukland", "lx": 440, "ly": 240, "a": "middle", "i": ""}, "L8": {"x": 500, "y": 250, "lb": "Leknes 鎮", "lx": 500, "ly": 220, "a": "middle", "i": "🛒"}, "LH2": {"x": 490, "y": 360, "lb": "Solsiden Brygge", "lx": 490, "ly": 385, "a": "middle", "i": "🏨"}, "L9": {"x": 680, "y": 240, "lb": "Henningsvær", "lx": 680, "ly": 265, "a": "middle", "i": ""}, "L10": {"x": 780, "y": 90, "lb": "Svolvær", "lx": 800, "ly": 90, "a": "start", "i": ""}}, "tromso": {"T1": {"x": 545, "y": 376, "lb": "特羅姆瑟大橋", "lx": 565, "ly": 376, "a": "start", "i": ""}, "T2": {"x": 740, "y": 335, "lb": "北極大教堂", "lx": 760, "ly": 335, "a": "start", "i": ""}, "T3": {"x": 830, "y": 450, "lb": "Fjellheisen 纜車", "lx": 850, "ly": 450, "a": "start", "i": ""}, "T4": {"x": 455, "y": 80, "lb": "購物街", "lx": 475, "ly": 80, "a": "start", "i": "🛍"}, "T5": {"x": 410, "y": 115, "lb": "圖書館", "lx": 390, "ly": 115, "a": "end", "i": ""}, "T6": {"x": 470, "y": 315, "lb": "Polaria 水族館", "lx": 490, "ly": 315, "a": "start", "i": ""}, "T7": {"x": 400, "y": 165, "lb": "巨怪博物館", "lx": 380, "ly": 165, "a": "end", "i": ""}, "T8": {"x": 390, "y": 225, "lb": "Risø 咖啡", "lx": 370, "ly": 225, "a": "end", "i": "☕"}, "T9": {"x": 325, "y": 480, "lb": "Telegrafbukta 海灘", "lx": 345, "ly": 480, "a": "start", "i": ""}, "T10": {"x": 475, "y": 145, "lb": "Ølhallen", "lx": 495, "ly": 145, "a": "start", "i": "🍺"}, "T11": {"x": 455, "y": 205, "lb": "Bardus Bistro", "lx": 475, "ly": 205, "a": "start", "i": "🍽"}, "T12": {"x": 430, "y": 42, "lb": "麥當勞", "lx": 450, "ly": 42, "a": "start", "i": "🍔"}, "T13": {"x": 440, "y": 270, "lb": "Mathallen", "lx": 460, "ly": 270, "a": "start", "i": "🍽"}, "TH": {"x": 487, "y": 235, "lb": "Skaret by VANDER", "lx": 510, "ly": 236, "a": "start", "i": "🏨"}, "T0": {"x": 512, "y": 252, "lb": "Prostneset 碼頭", "lx": 532, "ly": 252, "a": "start", "i": "⛴"}}};
+const PINS = {"lofoten": {"L1": {"x": 800, "y": 430, "lb": "博多機場", "lx": 820, "ly": 430, "a": "start", "i": "✈️"}, "LH1": {"x": 170, "y": 360, "lb": "The Tide", "lx": 150, "ly": 340, "a": "end", "i": "🏨"}, "L2": {"x": 150, "y": 480, "lb": "Å 漁村", "lx": 150, "ly": 505, "a": "middle", "i": ""}, "L3": {"x": 210, "y": 440, "lb": "Olenilsøya", "lx": 210, "ly": 465, "a": "middle", "i": ""}, "LF1": {"x": 240, "y": 390, "lb": "Anita's Sjømat", "lx": 220, "ly": 380, "a": "end", "i": "🦐"}, "L4": {"x": 260, "y": 390, "lb": "Hamnøy 橋", "lx": 280, "ly": 390, "a": "start", "i": ""}, "L5": {"x": 340, "y": 390, "lb": "Nusfjord", "lx": 340, "ly": 415, "a": "middle", "i": ""}, "L6": {"x": 300, "y": 350, "lb": "Ramberg 沙灘", "lx": 280, "ly": 330, "a": "end", "i": ""}, "L7": {"x": 440, "y": 260, "lb": "Haukland", "lx": 440, "ly": 240, "a": "middle", "i": ""}, "L8": {"x": 500, "y": 250, "lb": "Leknes 鎮", "lx": 500, "ly": 220, "a": "middle", "i": "🛒"}, "LH2": {"x": 490, "y": 360, "lb": "Solsiden Brygge", "lx": 490, "ly": 385, "a": "middle", "i": "🏨"}, "L9": {"x": 680, "y": 240, "lb": "Henningsvær", "lx": 680, "ly": 265, "a": "middle", "i": ""}, "L10": {"x": 780, "y": 90, "lb": "Svolvær", "lx": 800, "ly": 90, "a": "start", "i": ""}, "LF2": {"x": 730, "y": 130, "lb": "Børsen", "lx": 710, "ly": 130, "a": "end", "i": "🍽"}, "LF3": {"x": 835, "y": 140, "lb": "Paleo Arctic", "lx": 855, "ly": 140, "a": "start", "i": "🍽"}, "LF4": {"x": 890, "y": 100, "lb": "Nordis", "lx": 910, "ly": 100, "a": "start", "i": "🍽"}, "LP": {"x": 750, "y": 45, "lb": "Svolvær 碼頭", "lx": 730, "ly": 45, "a": "end", "i": "⚓"}}, "tromso": {"T1": {"x": 545, "y": 376, "lb": "特羅姆瑟大橋", "lx": 565, "ly": 376, "a": "start", "i": ""}, "T2": {"x": 740, "y": 335, "lb": "北極大教堂", "lx": 760, "ly": 335, "a": "start", "i": ""}, "T3": {"x": 830, "y": 450, "lb": "Fjellheisen 纜車", "lx": 850, "ly": 450, "a": "start", "i": ""}, "T4": {"x": 455, "y": 80, "lb": "購物街", "lx": 475, "ly": 80, "a": "start", "i": "🛍"}, "T5": {"x": 410, "y": 115, "lb": "圖書館", "lx": 390, "ly": 115, "a": "end", "i": ""}, "T6": {"x": 470, "y": 315, "lb": "Polaria 水族館", "lx": 490, "ly": 315, "a": "start", "i": ""}, "T7": {"x": 400, "y": 165, "lb": "巨怪博物館", "lx": 380, "ly": 165, "a": "end", "i": ""}, "T8": {"x": 390, "y": 225, "lb": "Risø 咖啡", "lx": 370, "ly": 225, "a": "end", "i": "☕"}, "T9": {"x": 325, "y": 480, "lb": "Telegrafbukta 海灘", "lx": 345, "ly": 480, "a": "start", "i": ""}, "T10": {"x": 475, "y": 145, "lb": "Ølhallen", "lx": 495, "ly": 145, "a": "start", "i": "🍺"}, "T11": {"x": 455, "y": 205, "lb": "Bardus Bistro", "lx": 475, "ly": 205, "a": "start", "i": "🍽"}, "T12": {"x": 430, "y": 42, "lb": "麥當勞", "lx": 450, "ly": 42, "a": "start", "i": "🍔"}, "T13": {"x": 440, "y": 270, "lb": "Mathallen", "lx": 460, "ly": 270, "a": "start", "i": "🍽"}, "TH": {"x": 487, "y": 235, "lb": "Skaret by VANDER", "lx": 510, "ly": 236, "a": "start", "i": "🏨"}, "T0": {"x": 512, "y": 252, "lb": "Prostneset 碼頭", "lx": 532, "ly": 252, "a": "start", "i": "⛴"}}};
 const DAYCOL = {lofoten:{4:'var(--sh)',5:'var(--r1)',6:'var(--r2)',7:'var(--r3)'}, tromso:{8:'var(--sh)',9:'var(--r1)'}};
 const NS = 'http://www.w3.org/2000/svg';
 const svgEl = (tag, attrs, parent, text) => { const e = document.createElementNS(NS, tag); for (const k in attrs) e.setAttribute(k, attrs[k]); if (text != null) e.textContent = text; parent && parent.appendChild(e); return e; };
@@ -1665,12 +1741,18 @@ function setupMap(region) {
   const mk = (txt, d, col) => { const b = document.createElement('button'); b.className = 'chip'; b.dataset.day = d; if (col) b.style.setProperty('--c', col); b.textContent = txt; bar.appendChild(b); };
   mk('全部', 0);
   state[region].days.forEach(({ day, date }) => mk('Day ' + day + ' · ' + date, day, DAYCOL[region][day]));
-  bar.insertAdjacentHTML('beforeend', '<span class="hint">圈內數字＝當天行程順序；虛線圈＝周邊備選；點日期只看當天路線</span>');
+  bar.insertAdjacentHTML('beforeend', '<span class="hint">圈內數字＝當天行程順序；虛線圈＝周邊備選；點日期只顯示當天路線與行程；點地圖上的景點，地圖下方會顯示該景點說明</span>');
   bar.addEventListener('click', e => {
     const b = e.target.closest('.chip'); if (!b) return;
     bar.querySelectorAll('.chip').forEach(c => c.classList.toggle('on', c === b));
     drawMap(region, +b.dataset.day || 0);
     leafSel(region, +b.dataset.day || 0);
+    // 只顯示所選那天的行程(「全部」則全部顯示),景點說明先收起,點地圖上的景點才在地圖下方展開
+    const dsel = +b.dataset.day || 0;
+    document.querySelectorAll('#tab-' + region + ' .day-block').forEach(el => { el.hidden = !!dsel && +el.dataset.day !== dsel; });
+    $('info-box-' + region).hidden = true; current[region] = null;
+    document.querySelectorAll('#tab-' + region + ' .pin.active').forEach(p => p.classList.remove('active'));
+    leafSel(region, dsel);
     const vw = views[region], dd = +b.dataset.day || 0;
     if (vw && matchMedia('(max-width: 640px)').matches) vw.fit(dd ? state[region].seq[dd].map(id => PINS[region][id]).filter(Boolean) : null);
   });
@@ -1848,16 +1930,17 @@ document.addEventListener('keydown', e => { if (e.key === 'Escape') lb.hidden = 
 // ───────── 地形圖(Leaflet + 免費圖磚),可與示意圖切換 ─────────
 const LL = {   // 約略真實座標(僅供概覽,精確位置請按「Google 地圖」)
   lofoten: { L1: [67.2692, 14.3653], LH1: [67.889, 13.017], L2: [67.8793, 12.9828], LF1: [67.9403, 13.11], L3: [67.94124, 13.11623], L4: [67.9437, 13.1328],
-    L5: [68.0233, 13.3338], L6: [68.0925, 13.222], L7: [68.179, 13.519], L8: [68.148, 13.611], LH2: [68.069, 13.528], L9: [68.1528, 14.203], L10: [68.2328, 14.5652] },
+    L5: [68.0233, 13.3338], L6: [68.0925, 13.222], L7: [68.179, 13.519], L8: [68.148, 13.611], LH2: [68.069, 13.528], L9: [68.1528, 14.203], L10: [68.2328, 14.5652], LF2: [68.2316, 14.5638], LF3: [68.2349, 14.5672], LF4: [68.2342, 14.5684], LP: [68.2352, 14.5662] },
   tromso: { T0: [69.6466, 18.9606], T1: [69.6445, 19.003], T2: [69.6431, 19.0171], T3: [69.6375, 19.0285], T4: [69.649, 18.9565], T5: [69.6485, 18.9602], T6: [69.643, 18.964],
     T7: [69.6478, 18.9585], T8: [69.6482, 18.9545], T9: [69.64, 18.927], T10: [69.6502, 18.9564], T11: [69.649, 18.9535], T12: [69.647, 18.957], T13: [69.6493, 18.9573], TH: [69.6462, 18.9568] }
 };
 const LABEL_ZOOM = { lofoten: 9, tromso: 14 };
-const LBLDIR = { LF1: 'left', L3: 'bottom', L4: 'right', T4: 'left', T8: 'left', T11: 'left', T10: 'right', T13: 'right', T12: 'bottom', TH: 'bottom', T5: 'right', T7: 'left' };
+const LBLDIR = { LF2: 'left', LP: 'left', LF1: 'left', L3: 'bottom', L4: 'right', T4: 'left', T8: 'left', T11: 'left', T10: 'right', T13: 'right', T12: 'bottom', TH: 'bottom', T5: 'right', T7: 'left' };
 const LBLOFF = { left: [-14, 0], right: [14, 0], bottom: [0, 14] };
 const BASES = {
   '🏔 Esri 地形圖': ['https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}', { maxZoom: 19, attribution: 'Tiles © Esri' }],
   '⛰ OpenTopoMap 等高線': ['https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', { maxZoom: 17, subdomains: 'abc', attribution: '© OpenStreetMap contributors, SRTM | © OpenTopoMap (CC-BY-SA)' }],
+  '🗺 CARTO 街道圖（備援）': ['https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', { maxZoom: 19, subdomains: 'abcd', attribution: '© OpenStreetMap contributors © CARTO' }],
   '🛰 Esri 衛星': ['https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { maxZoom: 19, attribution: 'Tiles © Esri' }]
 };
 const leaf = {};
@@ -1867,7 +1950,8 @@ function setMode(region, mode, auto) {
   const wrap = $('map-wrap-' + region), bar = $('modebar-' + region), L_ = leaf[region];
   wrap.classList.toggle('mode-leaf', mode === 'leaf');
   bar.querySelectorAll('.chip').forEach(c => c.classList.toggle('on', c.dataset.mode === mode));
-  bar.querySelector('.hint').textContent = auto ? '⚠ 無法載入地形圖（可能離線），已切換為示意圖' : mode === 'leaf' ? '地形圖需要網路；離線時請切換為示意圖' : '示意圖可離線使用';
+  bar.querySelector('.hint').textContent = auto ? '⚠ 地形圖載入失敗（已試過多個圖磚來源；可能離線或被瀏覽器/App 擋掉外部圖片），已切換為示意圖。連上網路後可再按「地形圖」重試' : mode === 'leaf' ? '地形圖需要網路；離線時請切換為示意圖' : '示意圖可離線使用';
+  if (mode === 'leaf' && L_ && L_.failed) { L_.failed = false; L_.retry(); }   // 先前載入失敗時,再按「地形圖」會重新嘗試
   if (mode === 'leaf' && L_) setTimeout(() => { L_.map.invalidateSize(); }, 0);
 }
 function drawLeaf(region, sel) {
@@ -1906,7 +1990,7 @@ function declutter(region) {
 function fitLeaf(region, sel) {
   const L_ = leaf[region], ids = sel ? state[region].seq[sel] : Object.keys(LL[region]);
   const pts = ids.map(id => LL[region][id]).filter(Boolean);
-  if (pts.length && L_.host.clientWidth) L_.map.fitBounds(L.latLngBounds(pts), { padding: [48, 48], maxZoom: 15 });
+  if (pts.length && L_.host.clientWidth) L_.map.fitBounds(L.latLngBounds(pts), { paddingTopLeft: [40, 48], paddingBottomRight: [100, 48], maxZoom: 15 });
 }
 function leafSel(region, sel) { if (leaf[region]) { drawLeaf(region, sel); fitLeaf(region, sel); } }
 function leafReveal(region, id) {
@@ -1921,8 +2005,17 @@ function setupLeaflet(region) {
   for (const [n, [u, o]] of Object.entries(BASES)) { bases[n] = L.tileLayer(u, o); first ??= bases[n]; }
   first.addTo(map); L.control.layers(bases, null, { position: 'topright', collapsed: true }).addTo(map);
   const L_ = leaf[region] = { map, host, layer: L.layerGroup().addTo(map), fitted: false };
-  let ok = 0, bad = 0;
-  Object.values(bases).forEach(l => { l.on('tileload', () => ok++); l.on('tileerror', () => { if (!ok && ++bad >= 6) setMode(region, 'svg', true); }); });
+  const layers = Object.values(bases); let ok = 0, bad = 0;
+  layers.forEach((l, i) => {
+    l.on('tileload', () => { if (map.hasLayer(l)) ok++; });
+    l.on('tileerror', () => {
+      if (ok || !map.hasLayer(l) || ++bad < 4) return;      // 已有成功載入,或不是目前使用的來源,就不處理
+      bad = 0; map.removeLayer(l);
+      if (layers[i + 1]) layers[i + 1].addTo(map);          // 這個來源載不出來 → 換下一個來源
+      else { L_.failed = true; setMode(region, 'svg', true); }   // 全部失敗才退回示意圖
+    });
+  });
+  L_.retry = () => { layers.forEach(l => map.hasLayer(l) && map.removeLayer(l)); ok = bad = 0; layers[0].addTo(map); };
   const labels = () => { host.classList.toggle('labels-off', map.getZoom() < LABEL_ZOOM[region]); declutter(region); };
   map.on('zoomend', labels); map.on('moveend', () => declutter(region));
   new ResizeObserver(() => { map.invalidateSize(); if (!L_.fitted && host.clientWidth) { L_.fitted = true; fitLeaf(region, 0); labels(); } }).observe(host);
@@ -1937,8 +2030,7 @@ function setupLeaflet(region) {
 hydrateImages();
 setupMap('lofoten'); setupMap('tromso');
 setupLeaflet('lofoten'); setupLeaflet('tromso');
-showInfo('lofoten', 'L2');
-showInfo('tromso', 'T1');
+$('info-box-lofoten').hidden = true; $('info-box-tromso').hidden = true;
 </script>
 </body>
 </html>
