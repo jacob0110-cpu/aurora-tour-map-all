@@ -729,6 +729,26 @@ li button{font:inherit;font-size:14px;color:var(--c);background:none;border:0;pa
 .rbar button.on{background:var(--c,var(--ink));color:#fff;border-color:var(--c,var(--ink))}
 .rbar .rhint{flex-basis:100%;font-size:13px;color:var(--mute);margin:0}
 #mapretry{font:inherit;font-size:13px;color:var(--r1);background:none;border:0;padding:0;text-decoration:underline;cursor:pointer}
+
+/* 即時氣候面板（與 hel.html 相同樣式） */
+:root{--sunc:#9a6b00}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--sunc:#e8c23a}}
+:root[data-theme="dark"]{--sunc:#e8c23a}
+.space{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:14px 16px;margin:0 0 12px}
+.sp-head{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin-bottom:10px}
+.sp-ref{background:transparent;color:var(--ink);border:1px solid var(--line);border-radius:6px;padding:4px 10px;font:inherit;font-size:13px;cursor:pointer}
+.sp-upd{color:var(--mute);font-size:12px;margin-left:auto}
+.sp-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px}
+.sp-card,.sp-night{background:rgba(127,127,127,.06);border:1px solid var(--line);border-radius:8px;padding:12px}
+.sp-t{color:var(--mute);font-size:12px;margin-bottom:4px}
+.sp-big{font-size:28px;font-weight:800;line-height:1.2}
+.sp-s{font-size:13px;color:var(--ink);opacity:.85;line-height:1.6}
+.sp-nights{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-top:12px}
+.sp-note,.sp-load{color:var(--mute);font-size:12px;margin:10px 0 0;line-height:1.6}
+.sp-sun{font-size:13px;color:var(--sunc);margin:4px 0 6px;line-height:1.5}
+.sp-night .sp-sun{font-size:12px;margin:2px 0 4px}
+.space a,.sp-note a{color:var(--r1)}
+@media (max-width:640px){.space{padding:12px}.sp-big{font-size:24px}.sp-upd{margin-left:0}.sp-grid,.sp-nights{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
@@ -738,9 +758,10 @@ li button{font:inherit;font-size:14px;color:var(--c);background:none;border:0;pa
 
 <div class="trip">
 <div class="date"><b>10/14</b><span>2026 年 10 月 14 日（三）</span></div>
-<div class="wx" id="wx"><b>奧斯陸目前約 11°C，多雲</b><small>9/30 查詢的快照，連網開啟時會自動更新為即時資料</small><small>10/14 預報：快照未包含（通常兩週內才有）。參考：奧斯陸 10 月中旬多為 3–10°C，早晚偏冷。</small></div>
+<div class="wx" id="wx"><b>奧斯陸 10 月中旬 秋季氣候</b><small>多為 3–10°C，早晚偏冷，建議穿著防風保暖衣物；即時天氣見下方面板。</small></div>
 <div class="stay"><span>住宿</span><b>🏨 BJØRVIKA APARTMENTS</b></div>
 </div>
+<div class="space" id="space-osl"></div>
 <div class="rbar" id="rbar"><button type="button" data-r="0" class="on">全部</button><button type="button" data-r="1" class="r1">路線一</button><button type="button" data-r="2" class="r2">路線二</button><button type="button" data-r="3" class="r3">美食路線</button><p class="rhint">點路線只顯示該路線的地圖與行程；點地圖上的編號，地圖下方會顯示該景點說明</p></div>
 <div class="wrap" id="wrap"><div id="map" role="application" aria-label="奧斯陸一日遊導覽地圖（地形圖）"></div></div>
 <div class="info" id="info"></div>
@@ -907,16 +928,43 @@ setRoute(0);
 zl();
 
 
-/* 天氣：連網時取用 Open-Meteo，失敗則保留上方快照 */
-var WC={0:"晴朗",1:"大致晴朗",2:"局部多雲",3:"多雲",45:"有霧",48:"有霧",51:"毛毛雨",53:"毛毛雨",55:"毛毛雨",61:"小雨",63:"中雨",65:"大雨",71:"小雪",73:"中雪",75:"大雪",77:"雪粒",80:"陣雨",81:"陣雨",82:"強陣雨",85:"陣雪",86:"陣雪",95:"雷雨",96:"雷雨",99:"雷雨"};
-try{
-fetch("https://api.open-meteo.com/v1/forecast?latitude=59.9139&longitude=10.7522&current=temperature_2m,weather_code,wind_speed_10m&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max&wind_speed_unit=ms&timezone=Europe%2FOslo&forecast_days=16")
-.then(function(r){return r.json()}).then(function(d){
-  var c=d.current,i=d.daily.time.indexOf("2026-10-14"),t=new Date().toLocaleTimeString("zh-TW",{hour:"2-digit",minute:"2-digit"});
-  var l2=i>-1?'10/14 預報：'+(WC[d.daily.weather_code[i]]||"—")+'，最高 '+Math.round(d.daily.temperature_2m_max[i])+'°C／最低 '+Math.round(d.daily.temperature_2m_min[i])+'°C，降雨機率 '+d.daily.precipitation_probability_max[i]+'%':'10/14 預報尚未提供';
-  $("wx").innerHTML='<b>奧斯陸現在 '+Math.round(c.temperature_2m)+'°C，'+(WC[c.weather_code]||"—")+'，風速 '+Math.round(c.wind_speed_10m)+' m/s</b><small>'+l2+'</small><small>資料：Open-Meteo，更新時間 '+t+'</small>';
-}).catch(function(){});
-}catch(e){}
+/* 即時氣候面板：Open-Meteo，版型與邏輯同 hel.html */
+(function(){
+var WMO=[[0,'☀️','晴'],[1,'🌤','大致晴朗'],[2,'⛅','多雲'],[3,'☁️','陰'],[48,'🌫','霧'],[57,'🌦','毛毛雨'],[67,'🌧','雨'],[77,'🌨','雪'],[82,'🌦','陣雨'],[86,'🌨','陣雪'],[99,'⛈','雷雨']];
+function wmo(c){for(var k=0;k<WMO.length;k++)if(c<=WMO[k][0])return WMO[k];return WMO[2]}
+function esc(x){return String(x).replace(/[&<>]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;'}[c]})}
+function hm(x){return x?x.slice(11,16):null}
+function dayIdx(D,d){return D&&D.time?D.time.indexOf(d):-1}
+function fetchJSON(u){return fetch(u).then(function(r){if(!r.ok)throw new Error(r.status);return r.json()})}
+function sunLine(D,i){
+  var r=hm(D&&D.sunrise&&D.sunrise[i]),s=hm(D&&D.sunset&&D.sunset[i]);
+  if(!r||!s)return '☀️ 此日無日出日落資料（極夜或永晝）';
+  var m=(Date.parse(D.sunset[i]+'Z')-Date.parse(D.sunrise[i]+'Z'))/6e4;
+  return '🌅 日出 '+r+' · 🌇 日落 '+s+' · 日照 '+Math.floor(m/60)+' 小時 '+Math.round(m%60)+' 分';
+}
+var LOC=['奧斯陸',59.9139,10.7522],TRIP=['2026-10-14'];
+var box=$('space-osl');
+box.innerHTML='<div class="sp-head"><b>🌤 奧斯陸即時氣候</b><span class="sp-upd"></span><button type="button" class="sp-ref">↻ 重新整理</button></div><div class="sp-body"></div>';
+var body=box.querySelector('.sp-body');
+function render(){
+  body.innerHTML='<div class="sp-load">載入即時資料中…</div>';
+  fetchJSON('https://api.open-meteo.com/v1/forecast?latitude='+LOC[1]+'&longitude='+LOC[2]+'&current=temperature_2m,apparent_temperature,weather_code,cloud_cover,wind_speed_10m,wind_gusts_10m,precipitation&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max,sunrise,sunset&wind_speed_unit=ms&timezone=Europe%2FOslo&forecast_days=16').then(function(w){
+    var c=w.current,t=wmo(c.weather_code),ic=t[1],tx=t[2],D=w.daily;
+    var h='<div class="sp-grid"><div class="sp-card"><div class="sp-t">目前天氣 · '+esc(LOC[0])+'</div><div class="sp-big">'+ic+' '+Math.round(c.temperature_2m)+'°C</div><div class="sp-sun">'+sunLine(D,0)+'</div><div class="sp-s">'+tx+'，體感 '+Math.round(c.apparent_temperature)+'°C<br>雲量 '+c.cloud_cover+'% · 風 '+c.wind_speed_10m+' m/s（陣風 '+c.wind_gusts_10m+'）<br>降水 '+c.precipitation+' mm</div></div></div>';
+    var days=TRIP.map(function(d){return[d,dayIdx(D,d)]}).filter(function(x){return x[1]>=0});
+    h+=days.length?'<div class="sp-nights">'+days.map(function(x){var d=x[0],i=x[1],t2=wmo(D.weather_code[i]);return '<div class="sp-night"><b>'+d.slice(5).replace('-','/')+'</b> <small>'+t2[2]+'</small><div class="sp-big">'+t2[1]+' '+Math.round(D.temperature_2m_max[i])+'° / '+Math.round(D.temperature_2m_min[i])+'°</div><div class="sp-sun">'+sunLine(D,i)+'</div><div class="sp-s">降雨機率 '+D.precipitation_probability_max[i]+'%</div></div>'}).join('')+'</div>':'<p class="sp-note">行程日（10/14）尚未進入預報範圍（約出發前 16 天起可查），屆時按「重新整理」即可看到每日預報。</p>';
+    h+='<p class="sp-note">資料：Open-Meteo。官方預報：<a href="https://www.yr.no/en" target="_blank" rel="noopener">挪威氣象局 yr.no</a>。</p>';
+    body.innerHTML=h;
+  }).catch(function(){
+    body.innerHTML='<div class="sp-s">無法取得即時天氣（請確認網路連線）。<a href="https://www.yr.no" target="_blank" rel="noopener">改看 yr.no</a></div>';
+  }).then(function(){
+    box.querySelector('.sp-upd').textContent='更新 '+new Date().toLocaleTimeString('zh-TW',{hour:'2-digit',minute:'2-digit'});
+  });
+}
+box.querySelector('.sp-ref').onclick=render;
+render();
+setInterval(function(){if(!document.hidden)render()},6e5);
+})();
 </script>
 </body>
 </html>
