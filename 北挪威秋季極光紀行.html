@@ -1863,9 +1863,17 @@ function nightSun(D, d) {
 }
 let kpPromise = null;
 const getKp = (force) => (!force && kpPromise) || (kpPromise = fetchJSON('https://services.swpc.noaa.gov/products/noaa-planetary-k-index-forecast.json').then(rows => {
-  const [h, ...d] = rows, ti = h.indexOf('time_tag'), ki = h.indexOf('kp'), oi = h.indexOf('observed');
-  return d.map(r => ({ t: new Date(r[ti].replace(' ', 'T') + 'Z'), kp: +r[ki], obs: r[oi] === 'observed' }));
-}).catch(e => { kpPromise = null; throw e; }));
+  // NOAA 2026/03 起改為物件陣列；同時相容舊的「第一列是欄位名」格式
+  if (Array.isArray(rows[0])) {
+    const [h, ...d] = rows, ti = h.indexOf('time_tag'), ki = h.indexOf('kp'), oi = h.indexOf('observed');
+    rows = d.map(r => ({ time_tag: r[ti], kp: r[ki], observed: r[oi] }));
+  }
+  return rows.map(r => ({
+    t: new Date(String(r.time_tag).replace(' ', 'T').replace(/Z?$/, 'Z')),
+    kp: +(r.kp ?? r.Kp),
+    obs: r.observed === 'observed'
+  })).filter(r => !isNaN(r.kp) && !isNaN(r.t.getTime()));
+}).catch(e => { console.error('Kp 載入失敗：', e); kpPromise = null; throw e; }));
 const getWx = ([, la, lo]) => fetchJSON('https://api.open-meteo.com/v1/forecast?latitude=' + la + '&longitude=' + lo +
   '&current=temperature_2m,apparent_temperature,weather_code,cloud_cover,wind_speed_10m,wind_gusts_10m,precipitation&hourly=cloud_cover&daily=sunrise,sunset&wind_speed_unit=ms&timezone=Europe%2FOslo&forecast_days=4');
 
